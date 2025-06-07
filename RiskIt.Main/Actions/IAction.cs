@@ -1,4 +1,4 @@
-﻿namespace RiskTheTest.Actions
+﻿namespace RiskIt.Main.Actions
 {
     public interface IAction
     {

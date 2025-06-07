@@ -1,19 +1,9 @@
-﻿using RiskTheTest.Actions;
-using RiskTheTest.Models;
+﻿using RiskIt.Main.Actions;
 
-namespace RiskTheTest.CommandHandlers
+namespace RiskIt.Main.CommandHandlers
 {
     public class AttackHandler
     {
-        public (Area, Area) HandleCommand_Stateless(AttackAction comm)
-        {
-            var result = CalculateLostTroops(comm.AttackingTroops, comm.DefenderTroops);
-
-            var newAttacker = new Area { Id = comm.Attacker.Id, Troops = comm.Attacker.Troops - result.Item1 };
-            var newDefender = new Area { Id = comm.Defender.Id, Troops = comm.Defender.Troops - result.Item2 };
-
-            return (newAttacker, newDefender);
-        }
         public void HandleCommand(AttackAction comm)
         {
             var result = CalculateLostTroops(comm.AttackingTroops, comm.DefenderTroops);

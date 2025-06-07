@@ -1,6 +1,6 @@
-﻿using RiskTheTest.Models.Enums;
+﻿using RiskIt.Main.Models.Enums;
 
-namespace RiskTheTest.Models
+namespace RiskIt.Main.Models
 {
     public class Turn
     {

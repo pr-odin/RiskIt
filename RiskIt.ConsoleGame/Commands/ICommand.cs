@@ -1,4 +1,4 @@
-﻿namespace RiskTheTest.ConsoleGame.Commands
+﻿namespace RiskIt.ConsoleGame.Commands
 {
     public interface ICommand
     {

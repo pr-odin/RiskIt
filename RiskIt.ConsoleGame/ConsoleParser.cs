@@ -1,8 +1,8 @@
-﻿using RiskTheTest.ConsoleGame.Commands;
+﻿using RiskIt.ConsoleGame.Commands;
 
-namespace RiskTheTest.ConsoleGame
+namespace RiskIt.ConsoleGame
 {
-    public class Parser
+    public class ConsoleParser
     {
         public ICommand? Parse(string? input)
         {

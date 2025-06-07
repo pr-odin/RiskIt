@@ -1,6 +1,7 @@
-using RiskTheTest.ConsoleGame.Commands;
+using RiskIt.ConsoleGame;
+using RiskIt.ConsoleGame.Commands;
 
-namespace RiskTheTest.ConsoleGame.Tests
+namespace Riskit.ConsoleGame.Tests
 {
     public class ParseTests
     {
@@ -12,7 +13,7 @@ namespace RiskTheTest.ConsoleGame.Tests
         [Test]
         public void Server_ReturnsAServerCommand()
         {
-            var parser = new Parser();
+            var parser = new ConsoleParser();
 
             var input = "server startgame";
 
@@ -24,7 +25,7 @@ namespace RiskTheTest.ConsoleGame.Tests
         [Test]
         public void Default_ReturnsGameCommand()
         {
-            var parser = new Parser();
+            var parser = new ConsoleParser();
 
             var input = "";
 
@@ -36,7 +37,7 @@ namespace RiskTheTest.ConsoleGame.Tests
         [Test]
         public void NullValueInput_ReturnsNull()
         {
-            var parser = new Parser();
+            var parser = new ConsoleParser();
 
             string input = null;
 
@@ -48,7 +49,7 @@ namespace RiskTheTest.ConsoleGame.Tests
         [Test]
         public void SpongeBobText_BecomesLowerCaseCommand()
         {
-            var parser = new Parser();
+            var parser = new ConsoleParser();
 
             var input = "SeRvEr sTaRtGaMe";
 

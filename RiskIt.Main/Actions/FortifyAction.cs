@@ -1,6 +1,6 @@
-﻿using RiskTheTest.Models;
+﻿using RiskIt.Main.Models;
 
-namespace RiskTheTest.Actions
+namespace RiskIt.Main.Actions
 {
     public class FortifyAction : IAction
     {

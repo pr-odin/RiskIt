@@ -8,7 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\RiskTheTest\RiskTheTest.csproj" />
+    <ProjectReference Include="..\RiskIt.Main\RiskIt.Main.csproj" />
   </ItemGroup>
 
 </Project>

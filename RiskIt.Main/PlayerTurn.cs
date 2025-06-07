@@ -1,4 +1,5 @@
-﻿using RiskTheTest.Models;
+﻿using RiskIt.Main;
+using RiskIt.Main.Models;
 
 namespace RiskTheTest
 {

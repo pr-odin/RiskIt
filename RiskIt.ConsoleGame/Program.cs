@@ -1,14 +1,16 @@
-﻿using RiskTheTest.Actions;
-using RiskTheTest.ConsoleGame.Commands;
+﻿using RiskIt.ConsoleGame.Commands;
+using RiskIt.Main;
+using RiskIt.Main.Actions;
+using RiskIt.Main.Models;
 
-namespace RiskTheTest.ConsoleGame
+namespace RiskIt.ConsoleGame
 {
     public class Program
     {
         public static void Main(string[] args)
         {
             Game? game = null;
-            Parser parser = new Parser();
+            ConsoleParser parser = new ConsoleParser();
 
             Console.WriteLine("Some generic message that the loop has been entered");
 
@@ -35,7 +37,7 @@ namespace RiskTheTest.ConsoleGame
                     {
                         case ServerCommandType.StartGame:
                             GameConfig cfg = serverComm.GameConfig;
-                            Map map = GetMapById(cfg.MapId);
+                            IDictionary<int, Area> map = GetMapById(cfg.MapId);
                             Player[] players = CreatePlayers(cfg.PlayerCount);
                             game = new Game(map, players);
 
@@ -74,7 +76,7 @@ namespace RiskTheTest.ConsoleGame
             return res;
         }
 
-        private static Map GetMapById(int mapId)
+        private static IDictionary<int, Area> GetMapById(int mapId)
         {
             return null;
         }

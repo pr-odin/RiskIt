@@ -1,17 +1,18 @@
-﻿using RiskTheTest.Actions;
-using RiskTheTest.Models;
+﻿using RiskIt.Main.Actions;
+using RiskIt.Main.Models;
+using RiskTheTest;
 using System.ComponentModel.DataAnnotations;
 
-namespace RiskTheTest
+namespace RiskIt.Main
 {
     public class Game
     {
         public Guid Id { get; set; }
-        private Map Map { get; set; }
+        private IDictionary<int, Area> Map { get; set; }
         private List<Player> Players { get; set; }
         public PlayerTurn? GameTurn { get; set; }
 
-        public Game(Map map, IEnumerable<Player> players)
+        public Game(IDictionary<int, Area> map, IEnumerable<Player> players)
         {
             Id = Guid.NewGuid();
             Map = map;

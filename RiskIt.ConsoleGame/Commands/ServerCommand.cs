@@ -1,4 +1,6 @@
-﻿namespace RiskTheTest.ConsoleGame.Commands
+﻿using RiskIt.ConsoleGame;
+
+namespace RiskIt.ConsoleGame.Commands
 {
     public class ServerCommand : ICommand
     {

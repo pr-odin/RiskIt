@@ -1,6 +1,6 @@
-﻿using RiskTheTest.Actions;
+﻿using RiskIt.Main.Actions;
 
-namespace RiskTheTest.CommandHandlers
+namespace RiskIt.Main.CommandHandlers
 {
     public class FortifyHandler
     {

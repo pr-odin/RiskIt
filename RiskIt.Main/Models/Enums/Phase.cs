@@ -1,4 +1,4 @@
-﻿namespace RiskTheTest.Models.Enums
+﻿namespace RiskIt.Main.Models.Enums
 {
     public enum Phase
     {

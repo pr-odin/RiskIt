@@ -1,4 +1,4 @@
-﻿namespace RiskTheTest.ConsoleGame
+﻿namespace RiskIt.ConsoleGame
 {
     public class GameConfig
     {
@@ -11,7 +11,7 @@
 
             foreach (var addArg in additionalArgs)
             {
-                if (addArg.Length < 1 || !addArg.Contains(':')) return; 
+                if (addArg.Length < 1 || !addArg.Contains(':')) return;
 
                 var itemAndArgument = addArg.Split(":");
 
