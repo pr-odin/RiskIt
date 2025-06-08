@@ -6,10 +6,10 @@ namespace RiskIt.Main.CommandHandlers
     {
         public void HandleCommand(AttackAction comm)
         {
-            var result = CalculateLostTroops(comm.AttackingTroops, comm.DefenderTroops);
+            //var result = CalculateLostTroops(comm.AttackingTroops, comm.DefenderTroops);
 
-            comm.Attacker.Troops -= result.Item1;
-            comm.Defender.Troops -= result.Item2;
+            //comm.Attacker.Troops -= result.Item1;
+            //comm.Defender.Troops -= result.Item2;
         }
         public (int, int) CalculateLostTroops(int troopsAtk, int troopsDef, int seed = 0)
         {

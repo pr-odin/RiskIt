@@ -1,7 +1,5 @@
 ﻿using RiskIt.Main.Actions;
 using RiskIt.Main.Models;
-using RiskTheTest;
-using System.ComponentModel.DataAnnotations;
 
 namespace RiskIt.Main
 {
@@ -9,6 +7,7 @@ namespace RiskIt.Main
     {
         public Guid Id { get; set; }
         private IDictionary<int, Area> Map { get; set; }
+        private IDictionary<string, Area> AreasByName { get; set; }
         private List<Player> Players { get; set; }
         public PlayerTurn? GameTurn { get; set; }
 
@@ -16,6 +15,12 @@ namespace RiskIt.Main
         {
             Id = Guid.NewGuid();
             Map = map;
+            AreasByName = new Dictionary<string, Area>(
+                map.Values.Select(e =>
+                {
+                    return new KeyValuePair<string, Area>(key: e.Name, value: e);
+                })
+            );
             Players = players.ToList();
         }
 
@@ -47,6 +52,10 @@ namespace RiskIt.Main
 
                 GameTurn = newPlayerTurn;
             }
+        }
+        private Area GetArea(string name)
+        {
+            return AreasByName[name];
         }
     }
 }

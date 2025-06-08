@@ -6,7 +6,7 @@ namespace RiskIt.Main.CommandHandlers
     {
         public void HandleCommand(PlacementAction cmd)
         {
-            cmd.Area.Troops += cmd.Troops;
+            //cmd.Area.Troops += cmd.Troops;
         }
     }
 }

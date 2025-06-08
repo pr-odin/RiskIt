@@ -6,8 +6,8 @@ namespace RiskIt.Main.CommandHandlers
     {
         public void HandleCommand(FortifyAction cmd)
         {
-            cmd.From.Troops -= cmd.Amount;
-            cmd.To.Troops += cmd.Amount;
+            //cmd.From.Troops -= cmd.Amount;
+            //cmd.To.Troops += cmd.Amount;
         }
     }
 }

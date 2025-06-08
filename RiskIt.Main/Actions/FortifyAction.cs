@@ -4,8 +4,8 @@ namespace RiskIt.Main.Actions
 {
     public class FortifyAction : IAction
     {
-        public Area From { get; set; }
-        public Area To { get; set; }
+        public string From { get; set; }
+        public string To { get; set; }
         public int Amount { get; set; }
     }
 }

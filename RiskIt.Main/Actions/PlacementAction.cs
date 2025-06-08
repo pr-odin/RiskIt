@@ -4,7 +4,7 @@ namespace RiskIt.Main.Actions
 {
     public class PlacementAction : IAction
     {
-        public Area Area { get; set; }
+        public string Area { get; set; }
         public int Troops { get; set; }
     }
 }

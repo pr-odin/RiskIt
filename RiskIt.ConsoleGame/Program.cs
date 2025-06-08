@@ -78,7 +78,29 @@ namespace RiskIt.ConsoleGame
 
         private static IDictionary<int, Area> GetMapById(int mapId)
         {
-            return null;
+            var map = CreateTestMap().ExportMap();
+            return map;
+        }
+
+        private static MapGenerator CreateTestMap()
+        {
+            // circle/star
+            var mg = new MapGenerator();
+
+            mg.AddArea(0);
+            mg.AddArea(1);
+            mg.AddArea(2);
+            mg.AddArea(3);
+            mg.AddArea(4);
+
+            mg.AddConnection(0, 1);
+            mg.AddConnection(1, 2);
+            mg.AddConnection(2, 3);
+            mg.AddConnection(3, 4);
+            mg.AddConnection(4, 0);
+
+            return mg;
+
         }
     }
 }

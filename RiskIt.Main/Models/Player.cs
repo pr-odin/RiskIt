@@ -1,4 +1,4 @@
-﻿namespace RiskIt.Main
+﻿namespace RiskIt.Main.Models
 {
     public class Player
     {

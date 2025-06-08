@@ -1,7 +1,4 @@
-﻿using RiskIt.Main;
-using RiskIt.Main.Models;
-
-namespace RiskTheTest
+﻿namespace RiskIt.Main.Models
 {
     public class PlayerTurn
     {
