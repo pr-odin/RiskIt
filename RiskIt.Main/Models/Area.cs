@@ -1,21 +1,20 @@
 ﻿namespace RiskIt.Main.Models
 {
-    public class Area
+    public class Area<T> where T : IComparable<T>
     {
-        public int Id { get; set; }
+        public T Id { get; set; }
 
         public string Name { get; set; }
         public int? Troops { get; set; }
-        private IDictionary<int, Area> Connections;
+        private IDictionary<T, Area<T>> Connections;
 
-        public Area(int id, string name)
+        public Area(T id)
         {
             Id = id;
-            Name = name;
-            Connections = new Dictionary<int, Area>();
+            Connections = new Dictionary<T, Area<T>>();
         }
 
-        public void AddConnection(Area other)
+        public void AddConnection(Area<T> other)
         {
             Connections[other.Id] = other;
             other.Connections[Id] = this;

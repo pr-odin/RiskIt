@@ -7,9 +7,10 @@ namespace RiskIt.ConsoleGame
 {
     public class Program
     {
+
         public static void Main(string[] args)
         {
-            Game? game = null;
+            Game<int>? game = null;
             ConsoleParser parser = new ConsoleParser();
 
             Console.WriteLine("Some generic message that the loop has been entered");
@@ -37,9 +38,9 @@ namespace RiskIt.ConsoleGame
                     {
                         case ServerCommandType.StartGame:
                             GameConfig cfg = serverComm.GameConfig;
-                            IDictionary<int, Area> map = GetMapById(cfg.MapId);
+                            IDictionary<int, Area<int>> map = GetMapById(cfg.MapId);
                             Player[] players = CreatePlayers(cfg.PlayerCount);
-                            game = new Game(map, players);
+                            game = new Game<int>(map, players);
 
                             Console.WriteLine("New game started with id \"{0}\"", game.Id);
                             break;
@@ -76,16 +77,16 @@ namespace RiskIt.ConsoleGame
             return res;
         }
 
-        private static IDictionary<int, Area> GetMapById(int mapId)
+        private static IDictionary<int, Area<int>> GetMapById(int mapId)
         {
             var map = CreateTestMap().ExportMap();
             return map;
         }
 
-        private static MapGenerator CreateTestMap()
+        private static MapGenerator<int> CreateTestMap()
         {
             // circle/star
-            var mg = new MapGenerator();
+            var mg = new MapGenerator<int>();
 
             mg.AddArea(0);
             mg.AddArea(1);

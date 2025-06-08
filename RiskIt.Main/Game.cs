@@ -3,24 +3,18 @@ using RiskIt.Main.Models;
 
 namespace RiskIt.Main
 {
-    public class Game
+    public class Game<T> where T : IComparable<T>
     {
         public Guid Id { get; set; }
-        private IDictionary<int, Area> Map { get; set; }
-        private IDictionary<string, Area> AreasByName { get; set; }
+        private IDictionary<T, Area<T>> Map { get; set; }
         private List<Player> Players { get; set; }
         public PlayerTurn? GameTurn { get; set; }
 
-        public Game(IDictionary<int, Area> map, IEnumerable<Player> players)
+        public Game(IDictionary<T, Area<T>> map, IEnumerable<Player> players)
         {
             Id = Guid.NewGuid();
             Map = map;
-            AreasByName = new Dictionary<string, Area>(
-                map.Values.Select(e =>
-                {
-                    return new KeyValuePair<string, Area>(key: e.Name, value: e);
-                })
-            );
+            // TODO: Seed the map
             Players = players.ToList();
         }
 
@@ -52,10 +46,6 @@ namespace RiskIt.Main
 
                 GameTurn = newPlayerTurn;
             }
-        }
-        private Area GetArea(string name)
-        {
-            return AreasByName[name];
         }
     }
 }
