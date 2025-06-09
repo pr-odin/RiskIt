@@ -14,7 +14,9 @@ namespace RiskIt.Main.Tests
             playerTroops.AddFirst((new Player() { Id = 0 }, 20));
             playerTroops.AddLast((new Player() { Id = 1 }, 20));
 
-            MapSeed<int>.SeedRandom(ref areas, playerTroops);
+            MapSeed<int> mapSeeder = new MapSeed<int>(areas);
+
+            mapSeeder.SeedRandom(playerTroops);
 
             Assert.IsNotNull(areas);
             foreach (var area in areas)
@@ -35,7 +37,8 @@ namespace RiskIt.Main.Tests
             playerTroops.AddFirst((new Player() { Id = 0 }, amountTroopsPerPlayer));
             playerTroops.AddLast((new Player() { Id = 1 }, amountTroopsPerPlayer));
 
-            MapSeed<int>.SeedRandom(ref areas, playerTroops);
+            MapSeed<int> mapSeeder = new MapSeed<int>(areas);
+            mapSeeder.SeedRandom(playerTroops);
 
             Assert.IsNotNull(areas);
 

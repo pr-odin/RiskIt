@@ -4,46 +4,30 @@ namespace RiskIt.Main
 {
     public class MapSeed<T> where T : IComparable<T>
     {
-        // how to ensure that we generate a random list, but still testable
-        public static void SeedRandom(ref ICollection<Area<T>> areas , LinkedList<(Player player, int troops)> playerTroops)
+
+        private bool _hasEmpty;
+        private ICollection<Area<T>> _areas;
+        public SimpleAreaEnumerator<T> areaEnumerator; 
+
+        public MapSeed(ICollection<Area<T>> areas)
         {
+            _hasEmpty = true;
+            _areas = areas;
+            areaEnumerator = new SimpleAreaEnumerator<T>(_areas);
+        }
 
-            // if anything is empty, divide those to the players
-            //DivideToEmptyTerritories(areas, playerTroops, ref cPlayerTroops);
-
-            var areasEnumerator = areas.GetEnumerator();
-            var emptyAreasEnumerator = areas.Where(area => area.Player is null).GetEnumerator();
+        public ICollection<Area<T>> SeedRandom(LinkedList<(Player player, int troops)> playerTroops)
+        {
             var currNode = playerTroops.First;
-
-            bool hasEmpty = true;
 
             while (playerTroops.Count != 0)
             {
-                Area<T> currArea;
                 var playerTroop = currNode.Value;
 
-                if (hasEmpty)
-                {
-                    hasEmpty = emptyAreasEnumerator.MoveNext();
-                    // exists loop and goes into the else
-                    if (!hasEmpty)
-                    {
-                        hasEmpty = false;
-                        continue;
-                    } 
-                    currArea = emptyAreasEnumerator.Current;
+                Area<T> currArea = areaEnumerator.Next(playerTroop.player);
+
+                if (currArea.Player is null)
                     currArea.Player = playerTroop.player;
-                }
-                else
-                {
-                    // circular
-                    if (!areasEnumerator.MoveNext())
-                    {
-                        areasEnumerator.Reset();
-                        areasEnumerator.MoveNext();
-                    }
-                    currArea = areasEnumerator.Current;
-                }
 
 
                 currArea.Troops++;
@@ -65,25 +49,18 @@ namespace RiskIt.Main
                 if (currNode is null)
                     currNode = playerTroops.First;
             }
+            return _areas;
         }
-
-        public static void DivideToEmptyTerritories(ICollection<Area<T>> areas, List<(Player, int)> playerTroops, ref int cPlayerTroops)
+#if (DEBUG)
+        private string PrintAreas()
         {
-            Area<T>? empty;
-            while ((empty = areas.Where(e => e.Troops == 0).FirstOrDefault()) is not null
-                && playerTroops.Count != 0)
+            var res = "";
+            foreach (var area in _areas)
             {
-                var playerTroop = playerTroops[cPlayerTroops];
-                empty.Player = playerTroop.Item1;
-                empty.Troops++;
-                playerTroop.Item2--;
-
-                if (playerTroop.Item2 == 0)
-                    playerTroops.RemoveAt(cPlayerTroops);
-
-                if (++cPlayerTroops == playerTroops.Count)
-                    cPlayerTroops = 0;
+                res += area.ToString() + Environment.NewLine;
             }
+            return res;
         }
+#endif
     }
 }

@@ -6,6 +6,8 @@
         public string Name { get; set; }
         // belongs to which player
         public Player? Player { get; set; }
+        //debug helper
+        private string _playerText => Player is null ? "Unoccupied" : Player.ToString(); 
         public int Troops { get; set; } = 0;
         private IDictionary<T, Area<T>> Connections;
 
@@ -19,6 +21,11 @@
         {
             Connections[other.Id] = other;
             other.Connections[Id] = this;
+        }
+
+        public override string ToString()
+        {
+            return $"Id: {Id.ToString()}, Troops: {Troops.ToString()}, Player: {_playerText}";
         }
     }
 }
