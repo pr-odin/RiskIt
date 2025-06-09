@@ -5,11 +5,13 @@ VisualStudioVersion = 17.11.35327.3
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RiskTheTest", "RiskTheTest\RiskTheTest.csproj", "{20F35801-EFD9-4296-BC7E-F417125ADCDF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RiskIt.Main", "RiskIt.Main\RiskIt.Main.csproj", "{C99CA872-6A30-413E-AE8B-0FA6A0D95BB2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RiskIt.Main", "RiskIt.Main\RiskIt.Main.csproj", "{C99CA872-6A30-413E-AE8B-0FA6A0D95BB2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RiskIt.ConsoleGame", "RiskIt.ConsoleGame\RiskIt.ConsoleGame.csproj", "{C41D6442-A230-49BE-BF80-56DD0C6F851F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RiskIt.ConsoleGame", "RiskIt.ConsoleGame\RiskIt.ConsoleGame.csproj", "{C41D6442-A230-49BE-BF80-56DD0C6F851F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Riskit.ConsoleGame.Tests", "Riskit.ConsoleGame.Tests\Riskit.ConsoleGame.Tests.csproj", "{37A941B8-21C6-4E0E-93BE-51CBC98259C6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Riskit.ConsoleGame.Tests", "Riskit.ConsoleGame.Tests\Riskit.ConsoleGame.Tests.csproj", "{37A941B8-21C6-4E0E-93BE-51CBC98259C6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RiskIt.Main.Tests", "RiskIt.Main.Tests\RiskIt.Main.Tests.csproj", "{6BCACD59-DC7D-4DCD-9A69-7C271499A7EF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -32,6 +34,10 @@ Global
 		{37A941B8-21C6-4E0E-93BE-51CBC98259C6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{37A941B8-21C6-4E0E-93BE-51CBC98259C6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{37A941B8-21C6-4E0E-93BE-51CBC98259C6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6BCACD59-DC7D-4DCD-9A69-7C271499A7EF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6BCACD59-DC7D-4DCD-9A69-7C271499A7EF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6BCACD59-DC7D-4DCD-9A69-7C271499A7EF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6BCACD59-DC7D-4DCD-9A69-7C271499A7EF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -40,7 +40,7 @@ namespace RiskIt.ConsoleGame
                             GameConfig cfg = serverComm.GameConfig;
                             IDictionary<int, Area<int>> map = GetMapById(cfg.MapId);
                             Player[] players = CreatePlayers(cfg.PlayerCount);
-                            game = new Game<int>(map, players);
+                            game = new Game<int>(map: map, players: players);
 
                             Console.WriteLine("New game started with id \"{0}\"", game.Id);
                             break;
