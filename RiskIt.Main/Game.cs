@@ -10,11 +10,11 @@ namespace RiskIt.Main
         private List<Player> Players { get; set; }
         public PlayerTurn? GameTurn { get; set; }
 
-        public Game(IDictionary<T, Area<T>> map, IEnumerable<Player> players)
+        public Game(IDictionary<T, Area<T>> map,
+            IEnumerable<Player> players)
         {
             Id = Guid.NewGuid();
             Map = map;
-            // TODO: Seed the map
             Players = players.ToList();
         }
 

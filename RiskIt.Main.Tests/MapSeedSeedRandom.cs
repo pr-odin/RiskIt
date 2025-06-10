@@ -1,4 +1,5 @@
 using RiskIt.Main.Models;
+using RiskIt.Main.Models.Enums;
 
 namespace RiskIt.Main.Tests
 {
@@ -9,14 +10,22 @@ namespace RiskIt.Main.Tests
         public void NoEmptyAndUnOccupiedAreas()
         {
             ICollection<Area<int>> areas = GetTestMap().Values;
+            
+            uint amountTroopsPerPlayer = 20;
 
-            LinkedList<(Player, int)> playerTroops = new();
-            playerTroops.AddFirst((new Player() { Id = 0 }, 20));
-            playerTroops.AddLast((new Player() { Id = 1 }, 20));
+            LinkedList<(Player, uint)> playerTroops = new();
+            playerTroops.AddFirst((new Player() { Id = 0 }, amountTroopsPerPlayer));
+            playerTroops.AddLast((new Player() { Id = 1 }, amountTroopsPerPlayer));
 
-            MapSeed<int> mapSeeder = new MapSeed<int>(areas);
+            var playersCount = playerTroops.Count;
 
-            mapSeeder.SeedRandom(playerTroops);
+            AreaEnumeratorFactory<int> areaEnumeratorFactory = new AreaEnumeratorFactory<int>();
+            MapSeeder<int> mapSeeder = new MapSeeder<int>(areaEnumeratorFactory);
+
+            mapSeeder.Seed(
+                areas: areas,
+                playerTroops: playerTroops,
+                areaEnumeratorType: AreaEnumeratorType.Simple);
 
             Assert.IsNotNull(areas);
             foreach (var area in areas)
@@ -31,19 +40,26 @@ namespace RiskIt.Main.Tests
         {
             ICollection<Area<int>> areas = GetTestMap().Values;
 
-            int amountTroopsPerPlayer = 20;
+            uint amountTroopsPerPlayer = 20;
 
-            LinkedList<(Player, int)> playerTroops = new();
+            LinkedList<(Player, uint)> playerTroops = new();
             playerTroops.AddFirst((new Player() { Id = 0 }, amountTroopsPerPlayer));
             playerTroops.AddLast((new Player() { Id = 1 }, amountTroopsPerPlayer));
 
-            MapSeed<int> mapSeeder = new MapSeed<int>(areas);
-            mapSeeder.SeedRandom(playerTroops);
+            var playersCount = playerTroops.Count;
+
+            AreaEnumeratorFactory<int> areaEnumeratorFactory = new AreaEnumeratorFactory<int>();
+            MapSeeder<int> mapSeeder = new MapSeeder<int>(areaEnumeratorFactory);
+
+            mapSeeder.Seed(
+                areas: areas,
+                playerTroops: playerTroops,
+                areaEnumeratorType: AreaEnumeratorType.Simple);
 
             Assert.IsNotNull(areas);
 
 
-            int[] actualPlayerTroops = new int[2];
+            int[] actualPlayerTroops = new int[playersCount];
             foreach (var area in areas)
             {
                 actualPlayerTroops[area.Player.Id] += area.Troops;
@@ -53,6 +69,47 @@ namespace RiskIt.Main.Tests
             {
                 Assert.That(actualPlayerTroop, Is.EqualTo(amountTroopsPerPlayer));
             }
+
+        }
+
+        [Test]
+        public void NoPlayerHasMoreThan50PercentMoreAreasThanOther()
+        {
+            ICollection<Area<int>> areas = GetTestMap().Values;
+
+            uint amountTroopsPerPlayer = 20;
+
+            LinkedList<(Player, uint)> playerTroops = new();
+            playerTroops.AddFirst((new Player() { Id = 0 }, amountTroopsPerPlayer));
+            playerTroops.AddLast((new Player() { Id = 1 }, amountTroopsPerPlayer));
+
+            var playersCount = playerTroops.Count;
+
+            AreaEnumeratorFactory<int> areaEnumeratorFactory = new AreaEnumeratorFactory<int>();
+            MapSeeder<int> mapSeeder = new MapSeeder<int>(areaEnumeratorFactory);
+
+            mapSeeder.Seed(
+                areas: areas,
+                playerTroops: playerTroops,
+                areaEnumeratorType: AreaEnumeratorType.Simple);
+
+            Assert.IsNotNull(areas);
+
+            int[] actualPlayerAreasCount = new int[playersCount];
+            foreach (var area in areas)
+            {
+                actualPlayerAreasCount[area.Player.Id]++;
+            }
+
+            int max = -1;
+            int min = int.MaxValue;
+            foreach (var actualPlayerTroop in actualPlayerAreasCount)
+            {
+                if (actualPlayerTroop > max) max = actualPlayerTroop;
+                if (actualPlayerTroop < min) min = actualPlayerTroop;
+
+            }
+            Assert.That((max - min), Is.Not.GreaterThanOrEqualTo(min));
 
         }
 

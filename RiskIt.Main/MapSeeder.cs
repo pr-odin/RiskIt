@@ -1,23 +1,24 @@
 ﻿using RiskIt.Main.Models;
+using RiskIt.Main.Models.Enums;
 
 namespace RiskIt.Main
 {
-    public class MapSeed<T> where T : IComparable<T>
+    public class MapSeeder<T> where T : IComparable<T>
     {
 
-        private bool _hasEmpty;
-        private ICollection<Area<T>> _areas;
-        public SimpleAreaEnumerator<T> areaEnumerator; 
+        public AreaEnumeratorFactory<T> AreaEnumeratorFactory { get; set; }
 
-        public MapSeed(ICollection<Area<T>> areas)
+        public MapSeeder(AreaEnumeratorFactory<T> areaEnumeratorFactory)
         {
-            _hasEmpty = true;
-            _areas = areas;
-            areaEnumerator = new SimpleAreaEnumerator<T>(_areas);
+            AreaEnumeratorFactory = areaEnumeratorFactory;
         }
 
-        public ICollection<Area<T>> SeedRandom(LinkedList<(Player player, int troops)> playerTroops)
+        public void Seed(ICollection<Area<T>> areas,
+            LinkedList<(Player player, uint troops)> playerTroops,
+            AreaEnumeratorType areaEnumeratorType)
         {
+            IAreaEnumerator<T> areaEnumerator = AreaEnumeratorFactory.Create(areas, areaEnumeratorType);
+
             var currNode = playerTroops.First;
 
             while (playerTroops.Count != 0)
@@ -49,13 +50,12 @@ namespace RiskIt.Main
                 if (currNode is null)
                     currNode = playerTroops.First;
             }
-            return _areas;
         }
 #if (DEBUG)
-        private string PrintAreas()
+        private string PrintAreas(ICollection<Area<T>> areas)
         {
             var res = "";
-            foreach (var area in _areas)
+            foreach (var area in areas)
             {
                 res += area.ToString() + Environment.NewLine;
             }
