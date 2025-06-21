@@ -2,9 +2,9 @@
 
 namespace RiskIt.Main.Actions
 {
-    public class PlacementAction : IAction
+    public class PlacementAction<T> : GameAction<T> where T : IComparable<T>
     {
-        public string Area { get; set; }
+        public T Area { get; set; }
         public int Troops { get; set; }
     }
 }

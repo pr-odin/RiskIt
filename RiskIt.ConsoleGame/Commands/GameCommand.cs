@@ -14,7 +14,7 @@ namespace RiskIt.ConsoleGame.Commands
             return;
         }
 
-        public IAction ToAction()
+        public GameAction<string> ToAction()
         {
             switch (_commandType)
             {
@@ -22,7 +22,7 @@ namespace RiskIt.ConsoleGame.Commands
                     // TODO: add some error handling here
                     string name = _args[0];
                     int troops = int.Parse(_args[1]);
-                    return new PlacementAction
+                    return new PlacementAction<string>
                     {
                         Area = name,
                         Troops = troops
@@ -32,20 +32,18 @@ namespace RiskIt.ConsoleGame.Commands
                     string attackerName = _args[0];
                     int attackerTroops = int.Parse(_args[1]);
                     string defenderName = _args[2];
-                    int defenderTroops = int.Parse(_args[3]);
-                    return new AttackAction
+                    return new AttackAction<string>
                     {
                         Attacker = attackerName,
                         AttackingTroops = attackerTroops,
                         Defender = defenderName,
-                        DefenderTroops = defenderTroops
                     };
 
                 case GameCommandType.Fortify:
                     string fromName = _args[0];
                     string toName = _args[1];
                     int amount = int.Parse(_args[2]);
-                    return new FortifyAction
+                    return new FortifyAction<string>
                     {
                         From = fromName,
                         To = toName,

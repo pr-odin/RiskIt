@@ -17,7 +17,7 @@ namespace Riskit.ConsoleGame.Tests
 
             var cmd = PlacementCommand(args);
 
-            PlacementAction res = cmd.ToAction() as PlacementAction;
+            PlacementAction<string> res = cmd.ToAction() as PlacementAction<string>;
 
             Assert.IsNotNull(res);
             Assert.That(res.Area, Is.EqualTo("Jenny"));
@@ -57,17 +57,16 @@ namespace Riskit.ConsoleGame.Tests
         [Test]
         public void Attack_BaseCase()
         {
-            string[]? args = ["Jenny", "3", "IsOkay", "1"];
+            string[]? args = ["Jenny", "3", "IsOkay"];
 
             var cmd = AttackCommand(args);
 
-            AttackAction res = cmd.ToAction() as AttackAction;
+            AttackAction<string> res = cmd.ToAction() as AttackAction<string>;
 
             Assert.IsNotNull(res);
             Assert.That(res.Attacker, Is.EqualTo("Jenny"));
             Assert.That(res.AttackingTroops, Is.EqualTo(3));
             Assert.That(res.Defender, Is.EqualTo("IsOkay"));
-            Assert.That(res.DefenderTroops, Is.EqualTo(1));
         }
 
 
@@ -78,7 +77,7 @@ namespace Riskit.ConsoleGame.Tests
 
             var cmd = FortifyCommand(args);
 
-            FortifyAction res = cmd.ToAction() as FortifyAction;
+            FortifyAction<string> res = cmd.ToAction() as FortifyAction<string>;
 
             Assert.IsNotNull(res);
             Assert.That(res.From, Is.EqualTo("Jenny"));

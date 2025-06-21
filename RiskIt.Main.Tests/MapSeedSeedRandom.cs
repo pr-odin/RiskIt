@@ -25,7 +25,7 @@ namespace RiskIt.Main.Tests
             mapSeeder.Seed(
                 areas: areas,
                 playerTroops: playerTroops,
-                areaEnumeratorType: AreaEnumeratorType.Simple);
+                areaDistributionType: AreaDistributionType.Simple);
 
             Assert.IsNotNull(areas);
             foreach (var area in areas)
@@ -54,7 +54,7 @@ namespace RiskIt.Main.Tests
             mapSeeder.Seed(
                 areas: areas,
                 playerTroops: playerTroops,
-                areaEnumeratorType: AreaEnumeratorType.Simple);
+                areaDistributionType: AreaDistributionType.Simple);
 
             Assert.IsNotNull(areas);
 
@@ -91,7 +91,7 @@ namespace RiskIt.Main.Tests
             mapSeeder.Seed(
                 areas: areas,
                 playerTroops: playerTroops,
-                areaEnumeratorType: AreaEnumeratorType.Simple);
+                areaDistributionType: AreaDistributionType.Simple);
 
             Assert.IsNotNull(areas);
 

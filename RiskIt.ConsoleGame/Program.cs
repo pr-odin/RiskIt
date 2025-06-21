@@ -1,7 +1,9 @@
 ﻿using RiskIt.ConsoleGame.Commands;
 using RiskIt.Main;
 using RiskIt.Main.Actions;
+using RiskIt.Main.AttackHandlers;
 using RiskIt.Main.Models;
+using RiskIt.Main.Models.Enums;
 
 namespace RiskIt.ConsoleGame
 {
@@ -10,7 +12,9 @@ namespace RiskIt.ConsoleGame
 
         public static void Main(string[] args)
         {
-            Game<int>? game = null;
+            Game<string>? game = null;
+            AreaEnumeratorFactory<string> areaEnumeratorFactory = new AreaEnumeratorFactory<string>();
+            MapSeeder<string> mapSeeder = new MapSeeder<string>(areaEnumeratorFactory);
             ConsoleParser parser = new ConsoleParser();
 
             Console.WriteLine("Some generic message that the loop has been entered");
@@ -38,11 +42,25 @@ namespace RiskIt.ConsoleGame
                     {
                         case ServerCommandType.StartGame:
                             GameConfig cfg = serverComm.GameConfig;
-                            IDictionary<int, Area<int>> map = GetMapById(cfg.MapId);
+                            MapGenerator<string> mapGenerator = GetMapGeneratorById(cfg.MapId);
                             Player[] players = CreatePlayers(cfg.PlayerCount);
-                            game = new Game<int>(map: map, players: players);
+
+                            Random rand = new Random();
+                            var diceSeed = rand.Next();
+
+                            GameBuilder<string> builder = new GameBuilder<string>();
+                            builder.Players = players;
+                            builder.MapGenerator = mapGenerator;
+                            builder.MapSeeder = mapSeeder;
+                            builder.PlayerStartingTroops = 20;
+                            builder.AreaDistributionType = AreaDistributionType.Simple;
+                            builder.AttackHandlerType = AttackHandlerType.Simple;
+                            builder.Dice = new RandomDice(diceSeed);
+
+                            game = builder.Build();
 
                             Console.WriteLine("New game started with id \"{0}\"", game.Id);
+                            Console.WriteLine("Using seed \"{0}\" for dice", diceSeed);
                             break;
                         case ServerCommandType.EndGame:
                             // TODO: Persist game before destruction ?
@@ -59,7 +77,7 @@ namespace RiskIt.ConsoleGame
 
                 if (comm.GetType().Equals(typeof(GameCommand)))
                 {
-                    IAction action = (comm as GameCommand).ToAction();
+                    GameAction<string> action = (comm as GameCommand).ToAction();
                     game!.HandleAction(action);
                 }
             }
@@ -77,28 +95,27 @@ namespace RiskIt.ConsoleGame
             return res;
         }
 
-        private static IDictionary<int, Area<int>> GetMapById(int mapId)
+        private static MapGenerator<string> GetMapGeneratorById(int mapId)
         {
-            var map = CreateTestMap().ExportMap();
-            return map;
+            return CreateTestMap();
         }
 
-        private static MapGenerator<int> CreateTestMap()
+        private static MapGenerator<string> CreateTestMap()
         {
             // circle/star
-            var mg = new MapGenerator<int>();
+            var mg = new MapGenerator<string>();
 
-            mg.AddArea(0);
-            mg.AddArea(1);
-            mg.AddArea(2);
-            mg.AddArea(3);
-            mg.AddArea(4);
+            mg.AddArea(0.ToString());
+            mg.AddArea(1.ToString());
+            mg.AddArea(2.ToString());
+            mg.AddArea(3.ToString());
+            mg.AddArea(4.ToString());
 
-            mg.AddConnection(0, 1);
-            mg.AddConnection(1, 2);
-            mg.AddConnection(2, 3);
-            mg.AddConnection(3, 4);
-            mg.AddConnection(4, 0);
+            mg.AddConnection(0.ToString(), 1.ToString());
+            mg.AddConnection(1.ToString(), 2.ToString());
+            mg.AddConnection(2.ToString(), 3.ToString());
+            mg.AddConnection(3.ToString(), 4.ToString());
+            mg.AddConnection(4.ToString(), 0.ToString());
 
             return mg;
 

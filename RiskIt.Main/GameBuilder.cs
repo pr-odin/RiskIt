@@ -1,4 +1,5 @@
-﻿using RiskIt.Main.Models;
+﻿using RiskIt.Main.AttackHandlers;
+using RiskIt.Main.Models;
 using RiskIt.Main.Models.Enums;
 
 namespace RiskIt.Main
@@ -6,10 +7,12 @@ namespace RiskIt.Main
     public class GameBuilder<T> where T : IComparable<T>
     {
         public MapGenerator<T>? MapGenerator { get; set; }
-        public MapSeeder<T> MapSeeder { get; set; }
-        public IEnumerable<Player> Players { get; set; }
+        public MapSeeder<T>? MapSeeder { get; set; }
+        public IEnumerable<Player>? Players { get; set; }
         public uint PlayerStartingTroops { get; set; }
-        public AreaEnumeratorType AreaEnumeratorType { get; set; }
+        public AreaDistributionType AreaDistributionType { get; set; }
+        public IDice? Dice { get; set; }
+        public AttackHandlerType AttackHandlerType { get; set; }
 
 
         public Game<T> Build()
@@ -25,10 +28,21 @@ namespace RiskIt.Main
 
             MapSeeder.Seed(areas: map.Values,
                 playerTroops: playerTroops,
-                areaEnumeratorType: AreaEnumeratorType);
+                areaDistributionType: AreaDistributionType);
 
-            return new Game<T>(map, Players);
+            IAttackHandler attackHandler;
+
+            attackHandler = CreateAttackHandler(AttackHandlerType);
+
+            return new Game<T>(map, Players, attackHandler);
         }
 
+        private IAttackHandler CreateAttackHandler(AttackHandlerType type)
+        {
+            return type switch
+            {
+                AttackHandlerType.Simple => new SimpleAttackHandler(Dice),
+                _ => new SimpleAttackHandler(Dice)            };
+        }
     }
 }

@@ -6,18 +6,18 @@ namespace RiskIt.Main
     public class MapSeeder<T> where T : IComparable<T>
     {
 
-        public AreaEnumeratorFactory<T> AreaEnumeratorFactory { get; set; }
+        private AreaEnumeratorFactory<T> _areaEnumeratorFactory { get; set; }
 
         public MapSeeder(AreaEnumeratorFactory<T> areaEnumeratorFactory)
         {
-            AreaEnumeratorFactory = areaEnumeratorFactory;
+            _areaEnumeratorFactory = areaEnumeratorFactory;
         }
 
         public void Seed(ICollection<Area<T>> areas,
             LinkedList<(Player player, uint troops)> playerTroops,
-            AreaEnumeratorType areaEnumeratorType)
+            AreaDistributionType areaDistributionType)
         {
-            IAreaEnumerator<T> areaEnumerator = AreaEnumeratorFactory.Create(areas, areaEnumeratorType);
+            IAreaEnumerator<T> areaEnumerator = _areaEnumeratorFactory.Create(areas, areaDistributionType);
 
             var currNode = playerTroops.First;
 

@@ -1,7 +1,7 @@
 ﻿namespace RiskIt.Main.Models.Enums
 {
-    public enum AreaEnumeratorType
+    public enum AttackHandlerType
     {
-        Simple,
+        Simple
     }
 }

@@ -5,11 +5,11 @@ namespace RiskIt.Main
 {
     public class AreaEnumeratorFactory<T> where T : IComparable<T>
     {
-        public IAreaEnumerator<T> Create(ICollection<Area<T>> areas, AreaEnumeratorType type)
+        public IAreaEnumerator<T> Create(ICollection<Area<T>> areas, AreaDistributionType type)
         {
             switch (type)
             {
-                case (AreaEnumeratorType.Simple):
+                case (AreaDistributionType.Simple):
                     return new SimpleAreaEnumerator<T>(areas);
                 default:
                     throw new Exception("Doing expections later");

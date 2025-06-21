@@ -1,26 +1,21 @@
 ﻿using RiskIt.Main.Actions;
-
-namespace RiskIt.Main.CommandHandlers
+namespace RiskIt.Main.AttackHandlers
 {
-    public class AttackHandler
+    public class SimpleAttackHandler : IAttackHandler
     {
-        public void HandleCommand(AttackAction comm)
-        {
-            //var result = CalculateLostTroops(comm.AttackingTroops, comm.DefenderTroops);
+        private IDice _dice;
 
-            //comm.Attacker.Troops -= result.Item1;
-            //comm.Defender.Troops -= result.Item2;
+        public SimpleAttackHandler(IDice dice)
+        {
+            _dice = dice;
         }
-        public (int, int) CalculateLostTroops(int troopsAtk, int troopsDef, int seed = 0)
+        public (int AttackingTroops, int DefendingTroops) BattleResult(int troopsAtk, int troopsDef)
         {
             // simple one dice vs one dice
             // for now...
 
             Random r;
-            if (seed == 0)
-                r = new Random();
-            else
-                r = new Random(seed);
+            r = new Random();
 
 
             while (troopsAtk != 0 && troopsDef != 0)
