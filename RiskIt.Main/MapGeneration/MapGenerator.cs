@@ -1,7 +1,7 @@
 ﻿using RiskIt.Main.Models;
 using System.Reflection.Metadata.Ecma335;
 
-namespace RiskIt.Main
+namespace RiskIt.Main.MapGeneration
 {
     public class MapGenerator<T> where T : IComparable<T>
     {

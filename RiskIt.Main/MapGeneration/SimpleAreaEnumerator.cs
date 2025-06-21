@@ -1,6 +1,6 @@
 ﻿using RiskIt.Main.Models;
 
-namespace RiskIt.Main
+namespace RiskIt.Main.MapGeneration
 {
     public class SimpleAreaEnumerator<T> : IAreaEnumerator<T> where T : IComparable<T>
     {

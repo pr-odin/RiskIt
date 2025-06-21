@@ -1,4 +1,4 @@
-﻿namespace RiskIt.Main.Models.Enums
+﻿namespace RiskIt.Main.AttackHandlers
 {
     public enum AttackHandlerType
     {

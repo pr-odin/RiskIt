@@ -1,7 +1,7 @@
 ﻿using RiskIt.Main.Models;
 using RiskIt.Main.Models.Enums;
 
-namespace RiskIt.Main
+namespace RiskIt.Main.MapGeneration
 {
     public class AreaEnumeratorFactory<T> where T : IComparable<T>
     {
@@ -9,7 +9,7 @@ namespace RiskIt.Main
         {
             switch (type)
             {
-                case (AreaDistributionType.Simple):
+                case AreaDistributionType.Simple:
                     return new SimpleAreaEnumerator<T>(areas);
                 default:
                     throw new Exception("Doing expections later");

@@ -1,7 +1,7 @@
 ﻿using RiskIt.Main.Models;
 using RiskIt.Main.Models.Enums;
 
-namespace RiskIt.Main
+namespace RiskIt.Main.MapGeneration
 {
     public class MapSeeder<T> where T : IComparable<T>
     {
