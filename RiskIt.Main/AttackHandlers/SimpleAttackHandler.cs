@@ -14,14 +14,11 @@ namespace RiskIt.Main.AttackHandlers
             // simple one dice vs one dice
             // for now...
 
-            Random r;
-            r = new Random();
-
 
             while (troopsAtk != 0 && troopsDef != 0)
             {
-                var rollA = r.Next(5);
-                var rollB = r.Next(5);
+                var rollA = _dice.Next();
+                var rollB = _dice.Next();
 
                 if (rollA > rollB) // atk greater than def
                     troopsDef--;

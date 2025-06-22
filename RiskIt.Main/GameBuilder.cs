@@ -43,6 +43,7 @@ namespace RiskIt.Main
             return type switch
             {
                 AttackHandlerType.Simple => new SimpleAttackHandler(Dice),
+                AttackHandlerType.Normal => new NormalAttackHandler(Dice),
                 _ => new SimpleAttackHandler(Dice)            };
         }
     }

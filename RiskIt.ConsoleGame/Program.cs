@@ -55,7 +55,7 @@ namespace RiskIt.ConsoleGame
                             builder.MapSeeder = mapSeeder;
                             builder.PlayerStartingTroops = 20;
                             builder.AreaDistributionType = AreaDistributionType.Simple;
-                            builder.AttackHandlerType = AttackHandlerType.Simple;
+                            builder.AttackHandlerType = AttackHandlerType.Normal;
                             builder.Dice = new RandomDice(diceSeed);
 
                             game = builder.Build();
