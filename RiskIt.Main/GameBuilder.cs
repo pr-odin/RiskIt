@@ -2,6 +2,7 @@
 using RiskIt.Main.MapGeneration;
 using RiskIt.Main.Models;
 using RiskIt.Main.Models.Enums;
+using RiskIt.Main.Events;
 
 namespace RiskIt.Main
 {
@@ -14,6 +15,7 @@ namespace RiskIt.Main
         public AreaDistributionType AreaDistributionType { get; set; }
         public IDice? Dice { get; set; }
         public AttackHandlerType AttackHandlerType { get; set; }
+        public Action<GameEvent> OnEventCallBack { get; set; }
 
 
         public Game<T> Build()
@@ -35,7 +37,7 @@ namespace RiskIt.Main
 
             attackHandler = CreateAttackHandler(AttackHandlerType);
 
-            return new Game<T>(map, Players, attackHandler);
+            return new Game<T>(map, Players, attackHandler, OnEventCallBack);
         }
 
         private IAttackHandler CreateAttackHandler(AttackHandlerType type)
@@ -44,7 +46,8 @@ namespace RiskIt.Main
             {
                 AttackHandlerType.Simple => new SimpleAttackHandler(Dice),
                 AttackHandlerType.Normal => new NormalAttackHandler(Dice),
-                _ => new SimpleAttackHandler(Dice)            };
+                _ => new SimpleAttackHandler(Dice)
+            };
         }
     }
 }

@@ -2,6 +2,7 @@
 using RiskIt.Main;
 using RiskIt.Main.Actions;
 using RiskIt.Main.AttackHandlers;
+using RiskIt.Main.Events;
 using RiskIt.Main.MapGeneration;
 using RiskIt.Main.Models;
 using RiskIt.Main.Models.Enums;
@@ -17,6 +18,8 @@ namespace RiskIt.ConsoleGame
         {
             Game<string>? game = null;
             GameClient[] gameClients = new GameClient[PLAYER_COUNT];
+            GameClient activePlayer = gameClients[0];
+
             AreaEnumeratorFactory<string> areaEnumeratorFactory = new AreaEnumeratorFactory<string>();
             MapSeeder<string> mapSeeder = new MapSeeder<string>(areaEnumeratorFactory);
             ConsoleParser parser = new ConsoleParser();
@@ -41,6 +44,12 @@ namespace RiskIt.ConsoleGame
 
                 if (comm.GetType().Equals(typeof(ServerCommand)))
                 {
+                    // TODO:: Extract everything into "GameServer" layer ?
+                    void HandleGameEvent(GameEvent gameEvent)
+                    {
+                        PropagateEvent(gameEvent: gameEvent, gameClients: gameClients, activePlayer: ref activePlayer);
+                    }
+
                     var serverComm = comm as ServerCommand;
                     switch (serverComm.CommandType)
                     {
@@ -65,6 +74,7 @@ namespace RiskIt.ConsoleGame
                             builder.AreaDistributionType = AreaDistributionType.Simple;
                             builder.AttackHandlerType = AttackHandlerType.Normal;
                             builder.Dice = new RandomDice(diceSeed);
+                            builder.OnEventCallBack = HandleGameEvent;
 
                             game = builder.Build();
 
@@ -96,6 +106,39 @@ namespace RiskIt.ConsoleGame
                         Console.WriteLine(validation.ToString());
                     }
                 }
+            }
+        }
+
+        private static void PropagateEvent(GameEvent gameEvent, GameClient[] gameClients, ref GameClient activePlayer)
+        {
+            switch (gameEvent.GetType())
+            {
+                case var type when type == typeof(PhaseAdvancedEvent):
+                    foreach (var client in gameClients)
+                    {
+                        client.PlayerTurn.Turn.AdvanceTurn();
+                    }
+                    break;
+
+                case var type when type == typeof(PlayerTurnChangedEvent):
+                    activePlayer = gameClients
+                        .Where(p => p.Player.Id == ((PlayerTurnChangedEvent)gameEvent).NextPlayerId)
+                        .FirstOrDefault();
+
+                    var newPlayerTurn = new PlayerTurn
+                    {
+                        Player = activePlayer.Player,
+                        Turn = new Turn()
+                    };
+
+                    foreach (var client in gameClients)
+                    {
+                        client.PlayerTurn = newPlayerTurn;
+                    }
+                    break;
+
+                default:
+                    throw new Exception("Doing this later");
             }
         }
 

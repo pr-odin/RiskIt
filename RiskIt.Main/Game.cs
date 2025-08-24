@@ -1,5 +1,6 @@
 ﻿using RiskIt.Main.Actions;
 using RiskIt.Main.AttackHandlers;
+using RiskIt.Main.Events;
 using RiskIt.Main.Models;
 using RiskIt.Main.Models.Enums;
 
@@ -12,10 +13,12 @@ namespace RiskIt.Main
         private List<Player> _players { get; set; }
         public PlayerTurn GameTurn { get; private set; }
         private IAttackHandler _attackHandler;
+        private Action<GameEvent> _eventCallBack;
 
         public Game(IDictionary<T, Area<T>> map,
             IEnumerable<Player> players,
-            IAttackHandler attackHandler)
+            IAttackHandler attackHandler,
+            Action<GameEvent> EventCallBack)
         {
             if (players.Count() < 2) throw new Exception("Smth like too few players");
             Id = Guid.NewGuid();
@@ -23,6 +26,7 @@ namespace RiskIt.Main
             _players = players.ToList();
             GameTurn = new PlayerTurn { Player = _players.FirstOrDefault()!, Turn = new Turn() };
             _attackHandler = attackHandler;
+            _eventCallBack = EventCallBack;
         }
 
         public GameplayValidationType HandleAction(GameAction<T> action)
@@ -147,16 +151,20 @@ namespace RiskIt.Main
 
         public void AdvanceTurn()
         {
+            var newEvent = new PhaseAdvancedEvent();
             if (GameTurn is null || !GameTurn.Turn.AdvanceTurn())
             {
+                var nextPlayer = _players[CalculateNextPlayerTurn(GameTurn!.Player)];
                 PlayerTurn newPlayerTurn = new PlayerTurn
                 {
-                    Player = _players[CalculateNextPlayerTurn(GameTurn!.Player)],
+                    Player = nextPlayer,
                     Turn = new Turn()
                 };
+                newEvent = new PlayerTurnChangedEvent(nextPlayer.Id);
 
                 GameTurn = newPlayerTurn;
             }
+            _eventCallBack(newEvent);
         }
     }
 }
