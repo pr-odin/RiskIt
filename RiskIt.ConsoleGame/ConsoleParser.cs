@@ -11,26 +11,20 @@ namespace RiskIt.ConsoleGame
             input = input.ToLowerInvariant();
             string[] items = input.Split(" ");
 
-            ICommand command = ParseCommand(items[0]);
+            ICommand command;
 
-            command.Parse(items[1..^0]);
-
-            return command;
-        }
-
-        private ICommand ParseCommand(string input)
-        {
-            switch (input)
+            if (items[0] == "server")
             {
-                case "server":
-                    return new ServerCommand();
-                default:
-                    return new GameCommand();
-
+                command = new ServerCommand();
+                command.Parse(items[1..^0]);
+            }
+            else
+            {
+                command = new GameCommand();
+                command.Parse(items);
             }
 
-            return null;
-
+            return command;
         }
     }
 }

@@ -1,21 +1,25 @@
 ﻿using RiskIt.ConsoleGame.Models.Enums;
 using RiskIt.Main.Actions;
+using RiskIt.Main.Models.Enums;
 
 namespace RiskIt.ConsoleGame.Commands
 {
     public class GameCommand : ICommand
     {
 
+        public GameClient? GameClient;
         public GameCommandType? _commandType;
         public string[]? _args;
 
         public void Parse(string[] args)
         {
-            return;
+            _args = args;
         }
 
         public GameAction<string> ToAction()
         {
+            _commandType = GetGameCommandType();
+
             switch (_commandType)
             {
                 case GameCommandType.Placement:
@@ -51,6 +55,23 @@ namespace RiskIt.ConsoleGame.Commands
                     };
                 default:
                     throw new Exception("Still doing exceptions later");
+            }
+        }
+
+        private GameCommandType GetGameCommandType()
+        {
+            if (GameClient is null) throw new Exception("Writing these later");
+
+            switch (GameClient.PlayerTurn.Turn.Phase)
+            {
+                case (Phase.Placement):
+                    return GameCommandType.Placement;
+                case (Phase.Attack):
+                    return GameCommandType.Attack;
+                case (Phase.Fortify):
+                    return GameCommandType.Fortify;
+                default:
+                    throw new Exception("Writing these later");
             }
         }
     }

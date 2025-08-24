@@ -3,8 +3,6 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.11.35327.3
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RiskTheTest", "RiskTheTest\RiskTheTest.csproj", "{20F35801-EFD9-4296-BC7E-F417125ADCDF}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RiskIt.Main", "RiskIt.Main\RiskIt.Main.csproj", "{C99CA872-6A30-413E-AE8B-0FA6A0D95BB2}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RiskIt.ConsoleGame", "RiskIt.ConsoleGame\RiskIt.ConsoleGame.csproj", "{C41D6442-A230-49BE-BF80-56DD0C6F851F}"
@@ -19,9 +17,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{20F35801-EFD9-4296-BC7E-F417125ADCDF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{20F35801-EFD9-4296-BC7E-F417125ADCDF}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{20F35801-EFD9-4296-BC7E-F417125ADCDF}.Release|Any CPU.Build.0 = Release|Any CPU
 		{C99CA872-6A30-413E-AE8B-0FA6A0D95BB2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{C99CA872-6A30-413E-AE8B-0FA6A0D95BB2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C99CA872-6A30-413E-AE8B-0FA6A0D95BB2}.Release|Any CPU.ActiveCfg = Release|Any CPU

@@ -3,12 +3,10 @@
     public class GameConfig
     {
         public int MapId { get; set; }
-        public uint PlayerCount { get; set; }
+        public int PlayerCount { get; set; }
 
         public void Parse(string[] additionalArgs)
         {
-            SetDefaults();
-
             foreach (var addArg in additionalArgs)
             {
                 if (addArg.Length < 1 || !addArg.Contains(':')) return;
@@ -22,12 +20,6 @@
             }
         }
 
-        private void SetDefaults()
-        {
-            MapId = 1;
-            PlayerCount = 2;
-        }
-
         private void SetItem(string item, string arg)
         {
             switch (item)
@@ -36,7 +28,7 @@
                     MapId = Convert.ToInt32(arg);
                     return;
                 case "players":
-                    PlayerCount = Convert.ToUInt32(arg);
+                    PlayerCount = Convert.ToInt32(arg);
                     return;
                 default:
                     throw new Exception("Somethings off");

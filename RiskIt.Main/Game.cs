@@ -10,7 +10,7 @@ namespace RiskIt.Main
         public Guid Id { get; private set; }
         private IDictionary<T, Area<T>> _map { get; set; }
         private List<Player> _players { get; set; }
-        private PlayerTurn _gameTurn { get; set; }
+        public PlayerTurn GameTurn { get; private set; }
         private IAttackHandler _attackHandler;
 
         public Game(IDictionary<T, Area<T>> map,
@@ -18,11 +18,10 @@ namespace RiskIt.Main
             IAttackHandler attackHandler)
         {
             if (players.Count() < 2) throw new Exception("Smth like too few players");
-            
             Id = Guid.NewGuid();
             _map = map;
             _players = players.ToList();
-            _gameTurn = new PlayerTurn { Player = _players.FirstOrDefault()!, Turn = new Turn() };
+            GameTurn = new PlayerTurn { Player = _players.FirstOrDefault()!, Turn = new Turn() };
             _attackHandler = attackHandler;
         }
 
@@ -55,7 +54,7 @@ namespace RiskIt.Main
 
         private GameplayValidationType HandlePlacementAction(PlacementAction<T> action)
         {
-            if (_gameTurn.Turn.Phase != Phase.Placement)
+            if (GameTurn.Turn.Phase != Phase.Placement)
                 return GameplayValidationType.WrongPhase;
 
 
@@ -63,7 +62,7 @@ namespace RiskIt.Main
             if (!_map.TryGetValue(action.Area, out area))
                 return GameplayValidationType.AreaNotFound;
 
-            if (!area.Player.Equals(_gameTurn.Player))
+            if (!area.Player.Equals(GameTurn.Player))
                 return GameplayValidationType.NotPlayerTurn;
 
             area.Troops += action.Troops;
@@ -72,7 +71,7 @@ namespace RiskIt.Main
         }
         private GameplayValidationType HandleAttackAction(AttackAction<T> action)
         {
-            if (_gameTurn.Turn.Phase != Phase.Attack)
+            if (GameTurn.Turn.Phase != Phase.Attack)
                 return GameplayValidationType.WrongPhase;
 
             Area<T> attacker, defender;
@@ -82,7 +81,7 @@ namespace RiskIt.Main
             if (!_map.TryGetValue(action.Defender, out defender))
                 return GameplayValidationType.AreaNotFound;
 
-            if (!_gameTurn.Player.Equals(attacker.Player))
+            if (!GameTurn.Player.Equals(attacker.Player))
                 return GameplayValidationType.NotPlayerTurn;
             if (attacker.Player.Equals(defender.Player))
                 return GameplayValidationType.SamePlayersArea;
@@ -109,7 +108,7 @@ namespace RiskIt.Main
         }
         private GameplayValidationType HandleFortifyAction(FortifyAction<T> action)
         {
-            if (_gameTurn.Turn.Phase != Phase.Fortify)
+            if (GameTurn.Turn.Phase != Phase.Fortify)
                 return GameplayValidationType.WrongPhase;
 
             Area<T> from, to;
@@ -126,7 +125,7 @@ namespace RiskIt.Main
             if (!from.Player.Equals(to.Player))
                 return GameplayValidationType.SamePlayersArea;
 
-            if (!from.Player.Equals(_gameTurn.Player))
+            if (!from.Player.Equals(GameTurn.Player))
                 return GameplayValidationType.NotPlayerTurn;
 
             from.Troops -= action.Amount;
@@ -148,15 +147,15 @@ namespace RiskIt.Main
 
         public void AdvanceTurn()
         {
-            if (_gameTurn is null || !_gameTurn.Turn.AdvanceTurn())
+            if (GameTurn is null || !GameTurn.Turn.AdvanceTurn())
             {
                 PlayerTurn newPlayerTurn = new PlayerTurn
                 {
-                    Player = _players[CalculateNextPlayerTurn(_gameTurn!.Player)],
+                    Player = _players[CalculateNextPlayerTurn(GameTurn!.Player)],
                     Turn = new Turn()
                 };
 
-                _gameTurn = newPlayerTurn;
+                GameTurn = newPlayerTurn;
             }
         }
     }

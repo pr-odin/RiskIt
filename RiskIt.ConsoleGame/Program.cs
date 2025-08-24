@@ -10,10 +10,13 @@ namespace RiskIt.ConsoleGame
 {
     public class Program
     {
+        public static readonly int PLAYER_COUNT = 2;
+        public static readonly int MAP_ID = 1;
 
         public static void Main(string[] args)
         {
             Game<string>? game = null;
+            GameClient[] gameClients = new GameClient[PLAYER_COUNT];
             AreaEnumeratorFactory<string> areaEnumeratorFactory = new AreaEnumeratorFactory<string>();
             MapSeeder<string> mapSeeder = new MapSeeder<string>(areaEnumeratorFactory);
             ConsoleParser parser = new ConsoleParser();
@@ -43,8 +46,13 @@ namespace RiskIt.ConsoleGame
                     {
                         case ServerCommandType.StartGame:
                             GameConfig cfg = serverComm.GameConfig;
+                            cfg.PlayerCount = PLAYER_COUNT;
+                            cfg.MapId = MAP_ID;
+
                             MapGenerator<string> mapGenerator = GetMapGeneratorById(cfg.MapId);
+
                             Player[] players = CreatePlayers(cfg.PlayerCount);
+                            gameClients = players.Select(p => new GameClient(p)).ToArray();
 
                             Random rand = new Random();
                             var diceSeed = rand.Next();
@@ -78,13 +86,28 @@ namespace RiskIt.ConsoleGame
 
                 if (comm.GetType().Equals(typeof(GameCommand)))
                 {
+                    ((GameCommand)comm).GameClient = GetCurrentGameClient(gameClients);
                     GameAction<string> action = (comm as GameCommand).ToAction();
-                    game!.HandleAction(action);
+                    //
+                    GameplayValidationType validation = game!.HandleAction(action);
+                    if (validation != GameplayValidationType.Success)
+                    {
+                        // TODO: Add handling of action if wrong action
+                        Console.WriteLine(validation.ToString());
+                    }
                 }
             }
         }
 
-        private static Player[] CreatePlayers(uint playerCount)
+        private static GameClient GetCurrentGameClient(GameClient[] gameClients)
+        {
+            Player currPlayer = gameClients[0].PlayerTurn.Player;
+
+            return gameClients.Where(gc => gc.Player.Id == currPlayer.Id).FirstOrDefault();
+
+        }
+
+        private static Player[] CreatePlayers(int playerCount)
         {
             var res = new Player[playerCount];
 
