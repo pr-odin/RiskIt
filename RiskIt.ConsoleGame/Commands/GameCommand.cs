@@ -18,7 +18,8 @@ namespace RiskIt.ConsoleGame.Commands
 
         public GameAction<string> ToAction()
         {
-            _commandType = GetGameCommandType();
+            if (_commandType is null)
+                _commandType = GetGameCommandType();
 
             switch (_commandType)
             {

@@ -29,6 +29,7 @@
                     return;
                 case "players":
                     PlayerCount = Convert.ToInt32(arg);
+                    if (PlayerCount < 1) throw new Exception("Too few players or wat");
                     return;
                 default:
                     throw new Exception("Somethings off");

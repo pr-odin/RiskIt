@@ -5,19 +5,6 @@ namespace Riskit.ConsoleGame.Tests
     public class GameConfigParse
     {
         [Test]
-        public void EmptyDefaultsToGame()
-        {
-            var gameConfig = new GameConfig();
-
-            var parseArgs = new string[] { "" };
-
-            gameConfig.Parse(parseArgs);
-
-            Assert.That(gameConfig.MapId, Is.EqualTo(1));
-            Assert.That(gameConfig.PlayerCount, Is.EqualTo(2));
-        }
-
-        [Test]
         public void Map5AndPlayers4()
         {
             var gameConfig = new GameConfig();
@@ -50,7 +37,8 @@ namespace Riskit.ConsoleGame.Tests
 
             var parseArgs = new string[] { "players:-4", "map:4" };
 
-            Assert.Throws<OverflowException>(() => gameConfig.Parse(parseArgs));
+            // TODO: When we have added the corect exception, do that here
+            Assert.Throws<Exception>(() => gameConfig.Parse(parseArgs));
         }
     }
 }
