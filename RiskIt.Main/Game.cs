@@ -27,6 +27,10 @@ namespace RiskIt.Main
             GameTurn = new PlayerTurn { Player = _players.FirstOrDefault()!, Turn = new Turn() };
             _attackHandler = attackHandler;
             _eventCallBack = EventCallBack;
+
+
+            var gameStartEvent = new GameStartEvent(GameTurn.Player.Id);
+            EventCallBack(gameStartEvent);
         }
 
         public GameplayValidationType HandleAction(GameAction<T> action)

@@ -20,6 +20,8 @@ namespace RiskIt.ConsoleGame
             GameClient[] gameClients = new GameClient[PLAYER_COUNT];
             GameClient activePlayer = gameClients[0];
 
+            List<GameEvent> gameEvents = new List<GameEvent>();
+
             AreaEnumeratorFactory<string> areaEnumeratorFactory = new AreaEnumeratorFactory<string>();
             MapSeeder<string> mapSeeder = new MapSeeder<string>(areaEnumeratorFactory);
             ConsoleParser parser = new ConsoleParser();
@@ -47,6 +49,7 @@ namespace RiskIt.ConsoleGame
                     // TODO:: Extract everything into "GameServer" layer ?
                     void HandleGameEvent(GameEvent gameEvent)
                     {
+                        gameEvents.Add(gameEvent);
                         PropagateEvent(gameEvent: gameEvent, gameClients: gameClients, activePlayer: ref activePlayer);
                     }
 
@@ -80,6 +83,10 @@ namespace RiskIt.ConsoleGame
 
                             Console.WriteLine("New game started with id \"{0}\"", game.Id);
                             Console.WriteLine("Using seed \"{0}\" for dice", diceSeed);
+
+                            // print state of start game
+                            Console.WriteLine(GetStateAsString(activePlayer));
+
                             break;
                         case ServerCommandType.EndGame:
                             // TODO: Persist game before destruction ?
@@ -105,14 +112,23 @@ namespace RiskIt.ConsoleGame
                         // TODO: Add handling of action if wrong action
                         Console.WriteLine(validation.ToString());
                     }
+                    Console.WriteLine(GetStateAsString(activePlayer));
+                }
                 }
             }
+
+        private static string GetStateAsString(GameClient gameClient)
+        {
+            var playerTurn = gameClient.PlayerTurn;
+
+            return $"Active player: {playerTurn.Player.ToString()} | Phase: {playerTurn.Turn.Phase}";
         }
 
         private static void PropagateEvent(GameEvent gameEvent, GameClient[] gameClients, ref GameClient activePlayer)
         {
             switch (gameEvent.GetType())
             {
+
                 case var type when type == typeof(PhaseAdvancedEvent):
                     foreach (var client in gameClients)
                     {
@@ -125,16 +141,31 @@ namespace RiskIt.ConsoleGame
                         .Where(p => p.Player.Id == ((PlayerTurnChangedEvent)gameEvent).NextPlayerId)
                         .FirstOrDefault();
 
-                    var newPlayerTurn = new PlayerTurn
+                    foreach (var client in gameClients)
+                    {
+                        client.PlayerTurn = new PlayerTurn
                     {
                         Player = activePlayer.Player,
                         Turn = new Turn()
                     };
+                    }
+                    break;
+
+                case var type when type == typeof(GameStartEvent):
+                    activePlayer = gameClients
+                        .Where(p => p.Player.Id == ((GameStartEvent)gameEvent).NextPlayerId)
+                        .FirstOrDefault();
 
                     foreach (var client in gameClients)
                     {
-                        client.PlayerTurn = newPlayerTurn;
+                        client.PlayerTurn = new PlayerTurn
+                        {
+                            Player = activePlayer.Player,
+                            Turn = new Turn()
+                        };
+                        ;
                     }
+
                     break;
 
                 default:
