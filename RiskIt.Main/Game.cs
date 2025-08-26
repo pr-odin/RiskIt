@@ -142,6 +142,8 @@ namespace RiskIt.Main
             return GameplayValidationType.Success;
         }
 
+        public List<Area<T>> GetMapAreas() => _map.Values.ToList();
+
         public int CalculateNextPlayerTurn(Player player)
         {
             int playerId = player.Id;
