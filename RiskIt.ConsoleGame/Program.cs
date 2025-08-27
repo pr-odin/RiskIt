@@ -28,15 +28,17 @@ namespace RiskIt.ConsoleGame
             MapSeeder<string> mapSeeder = new MapSeeder<string>(areaEnumeratorFactory);
             ConsoleParser parser = new ConsoleParser();
 
+
+            /*Console.WriteLine(Console.BufferWidth);*/  // 120
+            /*Console.WriteLine(Console.BufferHeight);*/ // 9001
+            Console.BufferWidth = 120; // default 120
+            /*Console.BufferHeight = 900;*/
+            Console.SetWindowSize(Console.BufferWidth, 40);
+
             Console.WriteLine("Some generic message that the loop has been entered");
 
             while (true)
             {
-                /*Console.WriteLine(Console.BufferWidth);*/  // 120
-                /*Console.WriteLine(Console.BufferHeight);*/ // 9001
-                Console.BufferWidth = 120; // default 120
-                /*Console.BufferHeight = 900;*/
-                Console.SetWindowSize(Console.BufferWidth, 40);
 
                 string? input;
                 if (game is null) input = "server startgame"; // quick start game to see map
@@ -54,7 +56,9 @@ namespace RiskIt.ConsoleGame
                     continue;
                 }
 
-                if (comm.GetType().Equals(typeof(ServerCommand)))
+                Type commandType = comm.GetType();
+
+                if (commandType.Equals(typeof(ServerCommand)))
                 {
                     // TODO:: Extract everything into "GameServer" layer ?
                     void HandleGameEvent(GameEvent gameEvent)
@@ -112,7 +116,25 @@ namespace RiskIt.ConsoleGame
                     continue;
                 }
 
-                if (comm.GetType().Equals(typeof(GameCommand)))
+                if (commandType.Equals(typeof(DisplayCommand)))
+                {
+                    DisplayCommand dispComm = (DisplayCommand)comm;
+                    switch (dispComm.DisplayCommandType)
+                    {
+                        case DisplayCommandType.Map:
+                            PrintPaintAreasToConsole(
+                                    MapVisualizer.PrintMap(game!.GetMapAreas(),
+                                        CreateMapId1(MAP_VISUALIZE_DIM)));
+                            break;
+                        default:
+                            Console.Write(dispComm.Text);
+                            break;
+                    }
+                    continue;
+
+                }
+
+                if (commandType.Equals(typeof(GameCommand)))
                 {
                     ((GameCommand)comm).GameClient = GetCurrentGameClient(gameClients);
                     GameAction<string> action = (comm as GameCommand).ToAction();
@@ -124,7 +146,6 @@ namespace RiskIt.ConsoleGame
                         Console.WriteLine(validation.ToString());
                     }
                     Console.WriteLine(GetStateAsString(activePlayer));
-                    PrintPaintAreasToConsole(MapVisualizer.PrintMap(game.GetMapAreas(), CreateMapId1(MAP_VISUALIZE_DIM)));
                 }
             }
         }

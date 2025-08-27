@@ -13,7 +13,17 @@ namespace RiskIt.ConsoleGame
 
             ICommand command;
 
-            if (items[0] == "server")
+            if (items[0] == "?")
+            {
+                command = new DisplayCommand();
+                command.Parse(items);
+            }
+            else if (items[0] == "disp")
+            {
+                command = new DisplayCommand();
+                command.Parse(items[1..^0]);
+            }
+            else if (items[0] == "server")
             {
                 command = new ServerCommand();
                 command.Parse(items[1..^0]);
