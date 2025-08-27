@@ -1,4 +1,5 @@
 ﻿using RiskIt.ConsoleGame.Commands;
+using RiskIt.ConsoleGame.Models;
 using RiskIt.Main;
 using RiskIt.Main.Actions;
 using RiskIt.Main.AttackHandlers;
@@ -13,10 +14,10 @@ namespace RiskIt.ConsoleGame
     {
         public static readonly int PLAYER_COUNT = 2;
         public static readonly int MAP_ID = 1;
+        public static readonly int MAP_VISUALIZE_DIM = 5;
 
         public static void Main(string[] args)
         {
-            /*GetObjectInMap();*/
             Game<string>? game = null;
             GameClient[] gameClients = new GameClient[PLAYER_COUNT];
             GameClient activePlayer = gameClients[0];
@@ -31,7 +32,15 @@ namespace RiskIt.ConsoleGame
 
             while (true)
             {
-                var input = Console.ReadLine();
+                /*Console.WriteLine(Console.BufferWidth);*/  // 120
+                /*Console.WriteLine(Console.BufferHeight);*/ // 9001
+                Console.BufferWidth = 120; // default 120
+                /*Console.BufferHeight = 900;*/
+                Console.SetWindowSize(Console.BufferWidth, 40);
+
+                string? input;
+                if (game is null) input = "server startgame"; // quick start game to see map
+                else input = Console.ReadLine();
 
                 if (input.Trim().ToLowerInvariant() == "exit") return;
 
@@ -87,7 +96,7 @@ namespace RiskIt.ConsoleGame
 
                             // print state of start game
                             Console.WriteLine(GetStateAsString(activePlayer));
-                            PrintMap(game.GetMapAreas());
+                            PrintPaintAreasToConsole(MapVisualizer.PrintMap(game.GetMapAreas(), CreateMapId1(MAP_VISUALIZE_DIM)));
 
                             break;
                         case ServerCommandType.EndGame:
@@ -115,7 +124,7 @@ namespace RiskIt.ConsoleGame
                         Console.WriteLine(validation.ToString());
                     }
                     Console.WriteLine(GetStateAsString(activePlayer));
-                    PrintMap(game.GetMapAreas());
+                    PrintPaintAreasToConsole(MapVisualizer.PrintMap(game.GetMapAreas(), CreateMapId1(MAP_VISUALIZE_DIM)));
                 }
             }
         }
@@ -196,257 +205,6 @@ namespace RiskIt.ConsoleGame
             return res;
         }
 
-        private static void PrintMap(List<Area<string>> gameMap)
-        {
-
-            // all items are 2dim x 2dim (aka a square)
-            // in the grid where top left corner is 0,0 going positive down and right
-            // the figures create a 5 sided star
-            int dim = 5;
-
-            (int y, int x)[] mapAreas = CreateMapId1(dim);
-
-            // yes, I checked that this corresponds with the connections
-            // and the order in the map
-            int MAX_LENGTH = dim * 6;
-
-            PaintArea[,] grid = new PaintArea[MAX_LENGTH + 1, MAX_LENGTH + 1];
-
-
-            LinkedList<PaintArea>[] lines = new LinkedList<PaintArea>[MAX_LENGTH];
-
-            for (int i = 0; i < lines.Length; i++)
-            {
-                PaintArea empty = new PaintArea
-                {
-                    Background = ConsoleColor.Black,
-                    Foreground = ConsoleColor.White,
-                    Char = ' ',
-                    Length = MAX_LENGTH
-                };
-                lines[i] = new LinkedList<PaintArea>();
-                lines[i].AddFirst(empty);
-            }
-
-            for (int mapAreaIndex = 0; mapAreaIndex < mapAreas.Length; mapAreaIndex++)
-            {
-                var count = 2 * dim;
-
-                (int y, int x) mapArea = mapAreas[mapAreaIndex];
-                Area<string> gameMapArea = gameMap.FirstOrDefault(area => area.Id == mapAreaIndex.ToString());
-
-                PaintArea pa = new PaintArea
-                {
-                    Foreground = gameMapArea.Player.Id == 0 ? ConsoleColor.DarkRed : ConsoleColor.DarkBlue,
-                    Char = 'X',
-                    Length = 2 * dim
-                };
-
-                for (int lineY = mapArea.y; lineY < mapArea.y + (2 * dim); lineY++)
-                {
-                    LinkedList<PaintArea> currLine = lines[lineY];
-
-                    int acc = 0;
-                    LinkedListNode<PaintArea>? node = currLine.First;
-
-                    while (node is not null)
-                    {
-                        var lineItem = node.Value;
-
-                        if ((lineItem.Length + acc) > mapArea.x)
-                        {
-                            // so we need to insert the item "in" the item
-
-                            PaintArea newPA = new PaintArea
-                            {
-                                Background = pa.Background,
-                                Foreground = pa.Foreground,
-                                Char = pa.Char,
-                                Length = pa.Length
-                            };
-
-                            // diff between where we are now (acc)
-                            // and the start of the figure
-                            var newNode = InsertNewItem(node: node,
-                                          currItemConfig: lineItem,
-                                          startPosCurrItem: acc,
-                                          startPosNewItem: mapArea.x,
-                                          newItem: newPA);
-
-                            if (lineY > mapArea.y && ((mapArea.y + (2 * dim) - 1) > lineY))
-                                InsertItemInto(node: newNode);
-
-                            break;
-                        }
-                        acc += lineItem.Length;
-                        node = node.Next;
-                    }
-                }
-            }
-            PrintPaintAreasToConsole(lines);
-        }
-
-        private static void InsertItemInto(LinkedListNode<PaintArea> node)
-        {
-            int margin = 1;
-
-            PaintArea item = node.Value;
-
-#if DEBUG
-            int totalLen = item.Length;
-#endif
-
-            PaintArea newEmpty = new PaintArea
-            {
-                Background = ConsoleColor.Black,
-                Foreground = ConsoleColor.White,
-                Char = ' ',
-                Length = item.Length - (margin * 2)
-            };
-
-
-            item.Length = margin;
-
-            PaintArea newDuplicateItem = CreateDuplicatePA(item);
-
-#if DEBUG
-            if (totalLen != item.Length + newEmpty.Length + newDuplicateItem.Length)
-                throw new Exception("DEBUG! Length didn't match");
-#endif
-
-            node.List?.AddAfter(node, newDuplicateItem);
-            node.List?.AddAfter(node, newEmpty);
-        }
-
-        private static PaintArea CreateDuplicatePA(PaintArea item)
-        {
-            return new PaintArea
-            {
-                Background = item.Background,
-                Foreground = item.Foreground,
-                Char = item.Char,
-                Length = item.Length
-            };
-        }
-        private static LinkedListNode<PaintArea> InsertNewItem(LinkedListNode<PaintArea> node,
-                                                               PaintArea currItemConfig,
-                                                               int startPosCurrItem,
-                                                               int startPosNewItem,
-                                                               PaintArea newItem)
-        {
-            int newPrevItemLength = startPosNewItem - startPosCurrItem;
-
-
-            PaintArea newEmpty = new PaintArea
-            {
-                Background = currItemConfig.Background,
-                Foreground = currItemConfig.Foreground,
-                Char = currItemConfig.Char,
-                Length = currItemConfig.Length - newPrevItemLength - newItem.Length
-            };
-
-
-
-            currItemConfig.Length = newPrevItemLength;
-
-            node.List?.AddAfter(node, newEmpty);
-            return node.List?.AddAfter(node, newItem);
-        }
-
-        // old list implementation
-        // not actually in use, left for reference for now...
-        private static void GetObjectInMap()
-        {
-            // all items are 2dim x 2dim (aka a square)
-            // in the grid where top left corner is 0,0 going positive down and right
-            // the figures create a 5 sided star
-            int dim = 5;
-
-            (int y, int x)[] mapAreas = CreateMapId1(dim);
-
-            // yes, I checked that this corresponds with the connections
-            // and the order in the map
-            int MAX_LENGTH = dim * 6;
-
-            PaintArea[,] grid = new PaintArea[MAX_LENGTH + 1, MAX_LENGTH + 1];
-
-
-            List<PaintArea>[] lines = new List<PaintArea>[MAX_LENGTH];
-
-            for (int i = 0; i < lines.Length; i++)
-            {
-                PaintArea empty = new PaintArea
-                {
-                    Background = ConsoleColor.Black,
-                    Foreground = ConsoleColor.White,
-                    Char = ' ',
-                    Length = MAX_LENGTH
-                };
-                lines[i] = new List<PaintArea> { empty };
-            }
-
-            foreach (var mapArea in mapAreas)
-            {
-                var count = 2 * dim;
-
-
-                PaintArea pa = new PaintArea
-                {
-                    Background = ConsoleColor.Cyan,
-                    Foreground = ConsoleColor.DarkRed,
-                    Char = 'X',
-                    Length = 2 * dim
-                };
-
-                for (int lineY = mapArea.y; lineY < mapArea.y + (2 * dim); lineY++)
-                {
-                    var currLine = lines[lineY];
-
-                    int acc = 0;
-                    for (int i = 0; i < currLine.Count; i++)
-                    {
-                        var lineItem = currLine[i];
-                        if ((lineItem.Length + acc) > mapArea.x)
-                        {
-                            // so we need to insert the item "in" the item
-
-                            PaintArea newPA = new PaintArea
-                            {
-                                Background = pa.Background,
-                                Foreground = pa.Foreground,
-                                Char = pa.Char,
-                                Length = pa.Length
-                            };
-
-                            // diff between where we are now (acc)
-                            // and the start of the figure
-                            int x_delta = mapArea.x - acc;
-
-
-                            PaintArea newEmpty = new PaintArea
-                            {
-                                Background = lineItem.Background,
-                                Foreground = lineItem.Foreground,
-                                Char = lineItem.Char,
-                                Length = lineItem.Length - x_delta - newPA.Length
-                            };
-
-
-
-                            lineItem.Length = x_delta;
-
-                            currLine.Insert(i + 1, newEmpty);
-                            currLine.Insert(i + 1, newPA);
-                            break;
-                        }
-                        acc += lineItem.Length;
-                    }
-                }
-            }
-
-            PrintPaintAreasToConsole(lines);
-
-        }
 
         private static (int y, int x)[] CreateMapId1(int dim)
         {
@@ -463,6 +221,7 @@ namespace RiskIt.ConsoleGame
 
             return mapAreas;
         }
+
         private static void PrintPaintAreasToConsole(IEnumerable<PaintArea>[] lines)
         {
             Console.WriteLine();
@@ -473,7 +232,7 @@ namespace RiskIt.ConsoleGame
                     /*Console.BackgroundColor = item.Background;*/
                     Console.ForegroundColor = item.Foreground;
 
-                    string s = string.Join("", Enumerable.Repeat(item.Char, item.Length));
+                    string s = item.Word;
                     Console.Write(s);
                 }
                 Console.ResetColor();
@@ -482,17 +241,6 @@ namespace RiskIt.ConsoleGame
 
             Console.ResetColor();
             Console.WriteLine();
-        }
-        public class PaintArea
-        {
-            public ConsoleColor Background;
-            public ConsoleColor Foreground;
-            public char Char;
-            public int Length;
-            public override string ToString()
-            {
-                return $"{Char} ({Length}) - {Foreground}";
-            }
         }
 
         private static MapGenerator<string> GetMapGeneratorById(int mapId)
