@@ -54,7 +54,7 @@ Attack phase:
                                 - area 1 with 9 troops
 
 Fortify phase:
-[AreaFrom] [AreaTo] [Troops]    - Transfers [Troops] from [AreaFrom]
+[AreaFrom] [Troops] [AreaTo]    - Transfers [Troops] from [AreaFrom]
                                 - to [AreaTo]
                                 - '2 0 5' transfers 5 troops from 2
                                 - to 0

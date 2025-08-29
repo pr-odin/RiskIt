@@ -6,6 +6,7 @@ using RiskIt.Main.Models.Enums;
 
 namespace RiskIt.Main
 {
+    // TODO: Cards ?
     public class Game<T> where T : IComparable<T>
     {
         public Guid Id { get; private set; }
@@ -14,6 +15,9 @@ namespace RiskIt.Main
         public PlayerTurn GameTurn { get; private set; }
         private IAttackHandler _attackHandler;
         private Action<GameEvent> _eventCallBack;
+
+        private static readonly int PLACEMENT_TROOPS = 4;
+        private PlacementHandler _placementHandler;
 
         public Game(IDictionary<T, Area<T>> map,
             IEnumerable<Player> players,
@@ -24,7 +28,10 @@ namespace RiskIt.Main
             Id = Guid.NewGuid();
             _map = map;
             _players = players.ToList();
+
             GameTurn = new PlayerTurn { Player = _players.FirstOrDefault()!, Turn = new Turn() };
+            _placementHandler = new PlacementHandler(PLACEMENT_TROOPS);
+
             _attackHandler = attackHandler;
             _eventCallBack = EventCallBack;
 
@@ -55,7 +62,12 @@ namespace RiskIt.Main
             if (retVal is null)
                 return GameplayValidationType.DefaultCase;
 
-            AdvanceTurn();
+            if (retVal == GameplayValidationType.Success)
+            {
+                if (GameTurn.Turn.Phase != Phase.Placement || _placementHandler.IsFinished)
+                    AdvanceTurn();
+            }
+
             // not actually default case ever, but to make compiler happy
             return retVal ?? GameplayValidationType.DefaultCase;
         }
@@ -73,10 +85,15 @@ namespace RiskIt.Main
             if (!area.Player.Equals(GameTurn.Player))
                 return GameplayValidationType.NotPlayerTurn;
 
-            area.Troops += action.Troops;
-            return GameplayValidationType.Success;
+            if (action.Troops > _placementHandler.AvailableTroops)
+                return GameplayValidationType.TooManyTroops;
 
+            area.Troops += action.Troops;
+            _placementHandler.AvailableTroops -= action.Troops;
+
+            return GameplayValidationType.Success;
         }
+
         private GameplayValidationType HandleAttackAction(AttackAction<T> action)
         {
             if (GameTurn.Turn.Phase != Phase.Attack)
@@ -101,19 +118,28 @@ namespace RiskIt.Main
             // insert some attacking here
             var br = _attackHandler.BattleResult(action.AttackingTroops, defender.Troops);
 
-            attacker.Troops -= action.AttackingTroops + br.AttackingTroops;
-            defender.Troops = br.DefendingTroops;
-
-            if (defender.Troops == 0)
-            {
-                defender.Player = attacker.Player;
-                // only have to move one troop to the next territory for now
-                defender.Troops = 1;
-                attacker.Troops -= 1;
-            }
+            HandleBattleResult(br, action.AttackingTroops, attacker, defender);
 
             return GameplayValidationType.Success;
         }
+
+        public static void HandleBattleResult(
+                (int AttackingTroops, int DefendingTroops) battleResult,
+                int usedAttackingTroops,
+                Area<T> attacker,
+                Area<T> defender)
+        {
+            attacker.Troops -= usedAttackingTroops;
+            defender.Troops = battleResult.DefendingTroops;
+
+            // aka attacker won
+            if (defender.Troops == 0)
+            {
+                defender.Player = attacker.Player;
+                defender.Troops = battleResult.AttackingTroops;
+            }
+        }
+
         private GameplayValidationType HandleFortifyAction(FortifyAction<T> action)
         {
             if (GameTurn.Turn.Phase != Phase.Fortify)
@@ -152,7 +178,7 @@ namespace RiskIt.Main
             if (playerIndex == _players.Count - 1)
                 return 0;
 
-            return playerIndex++;
+            return ++playerIndex;
         }
 
         public void AdvanceTurn()
@@ -169,6 +195,7 @@ namespace RiskIt.Main
                 newEvent = new PlayerTurnChangedEvent(nextPlayer.Id);
 
                 GameTurn = newPlayerTurn;
+                _placementHandler = new PlacementHandler(PLACEMENT_TROOPS);
             }
             _eventCallBack(newEvent);
         }

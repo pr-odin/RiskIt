@@ -73,7 +73,7 @@ namespace Riskit.ConsoleGame.Tests
         [Test]
         public void Fortify_BaseCase()
         {
-            string[]? args = ["Jenny", "IsOkay", "3"];
+            string[]? args = ["Jenny", "3", "IsOkay"];
 
             var cmd = FortifyCommand(args);
 

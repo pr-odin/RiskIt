@@ -94,6 +94,7 @@ namespace RiskIt.Main.Tests
             Assert.That(br.DefendingTroops, Is.EqualTo(0));
         }
 
+        [Test]
         public void A2v1AttackerLoses_1Loss_1Tie_1Defender()
         {
             // nice 2v1 noob
@@ -109,6 +110,5 @@ namespace RiskIt.Main.Tests
             Assert.That(br.AttackingTroops, Is.EqualTo(0));
             Assert.That(br.DefendingTroops, Is.EqualTo(1));
         }
-
     }
 }

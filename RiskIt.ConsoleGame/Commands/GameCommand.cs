@@ -46,8 +46,8 @@ namespace RiskIt.ConsoleGame.Commands
 
                 case GameCommandType.Fortify:
                     string fromName = _args[0];
-                    string toName = _args[1];
-                    int amount = int.Parse(_args[2]);
+                    int amount = int.Parse(_args[1]);
+                    string toName = _args[2];
                     return new FortifyAction<string>
                     {
                         From = fromName,

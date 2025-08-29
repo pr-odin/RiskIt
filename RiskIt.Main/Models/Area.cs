@@ -3,11 +3,11 @@
     public class Area<T> where T : IComparable<T>
     {
         public T Id { get; set; }
-        public string Name { get; set; }
+        public string? Name { get; set; }
         // belongs to which player
         public Player? Player { get; set; }
         //debug helper
-        private string _playerText => Player is null ? "Unoccupied" : Player.ToString(); 
+        private string _playerText => Player is null ? "Unoccupied" : Player.ToString();
         public int Troops { get; set; } = 0;
         private IDictionary<T, Area<T>> Connections;
 
