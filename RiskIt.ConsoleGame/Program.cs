@@ -7,6 +7,7 @@ using RiskIt.Main.Events;
 using RiskIt.Main.MapGeneration;
 using RiskIt.Main.Models;
 using RiskIt.Main.Models.Enums;
+using Newtonsoft.Json;
 
 namespace RiskIt.ConsoleGame
 {
@@ -22,7 +23,12 @@ namespace RiskIt.ConsoleGame
             GameClient[] gameClients = new GameClient[PLAYER_COUNT];
             GameClient activePlayer = gameClients[0];
 
+            // probably not actually needed
+            // a log of all events sent from the game to clients
             List<GameEvent> gameEvents = new List<GameEvent>();
+
+            // the log of all actions done to the game
+            List<GameAction<string>> gameActions = new List<GameAction<string>>();
 
             AreaEnumeratorFactory<string> areaEnumeratorFactory = new AreaEnumeratorFactory<string>();
             MapSeeder<string> mapSeeder = new MapSeeder<string>(areaEnumeratorFactory);
@@ -68,6 +74,10 @@ namespace RiskIt.ConsoleGame
                     }
 
                     var serverComm = comm as ServerCommand;
+                    try
+                    {
+
+
                     switch (serverComm.CommandType)
                     {
                         case ServerCommandType.StartGame:
@@ -115,8 +125,49 @@ namespace RiskIt.ConsoleGame
                     }
                     continue;
                 }
+                    catch (Exception e)
+                    {
+#if DEBUG
+                        Console.WriteLine(e.Message);
+#endif
+                        comm = DisplayCommand.CreateUnknownCommand();
+                    }
+                }
 
-                if (commandType.Equals(typeof(DisplayCommand)))
+                if (commandType.Equals(typeof(GameCommand)))
+                {
+                    ((GameCommand)comm).GameClient = GetCurrentGameClient(gameClients);
+                    GameAction<string> action;
+
+                    try
+                    {
+                        action = (comm as GameCommand).ToAction();
+
+                        // so far, just write all actions to the log
+                        // TODO: Only write the actions that succeeded to the log
+                        gameActions.Add(action);
+
+                        var jsonAction = JsonConvert.SerializeObject(TypeWrapper<string>.SerializeWithType(action));
+                        Console.WriteLine($"Action as json: {jsonAction}");
+
+                        GameplayValidationType validation = game!.HandleAction(action);
+                        if (validation != GameplayValidationType.Success)
+                        {
+                            // TODO: Add handling of action if wrong action
+                            Console.WriteLine(validation.ToString());
+                        }
+                        Console.WriteLine(GetStateAsString(activePlayer));
+                    }
+                    catch (Exception e)
+                    {
+#if DEBUG
+                        Console.WriteLine(e.Message);
+#endif
+                        comm = DisplayCommand.CreateUnknownCommand();
+                    }
+                }
+
+                if (comm.GetType().Equals(typeof(DisplayCommand)))
                 {
                     DisplayCommand dispComm = (DisplayCommand)comm;
                     switch (dispComm.DisplayCommandType)
@@ -127,7 +178,7 @@ namespace RiskIt.ConsoleGame
                                         CreateMapId1(MAP_VISUALIZE_DIM)));
                             break;
                         default:
-                            Console.Write(dispComm.Text);
+                            Console.WriteLine(dispComm.Text);
                             break;
                     }
                     continue;

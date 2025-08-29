@@ -2,5 +2,6 @@
 {
     public abstract class GameAction<T> where T : IComparable<T>
     {
+        public abstract string TypeAsString();
     }
 }

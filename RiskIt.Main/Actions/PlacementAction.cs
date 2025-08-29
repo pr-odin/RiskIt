@@ -6,5 +6,10 @@ namespace RiskIt.Main.Actions
     {
         public T Area { get; set; }
         public int Troops { get; set; }
+
+        public override string TypeAsString()
+        {
+            return "PlacementAction";
+        }
     }
 }

@@ -7,6 +7,13 @@ namespace RiskIt.ConsoleGame.Commands
         public DisplayCommandType DisplayCommandType;
         public string? Text;
 
+        public static DisplayCommand CreateUnknownCommand()
+        {
+            var comm = new DisplayCommand { DisplayCommandType = DisplayCommandType.Unknown };
+            comm.SetUnknownText();
+            return comm;
+        }
+
         public void Parse(string[] args)
         {
             switch (args[0])
