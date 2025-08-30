@@ -1,13 +1,10 @@
 ﻿using RiskIt.ConsoleGame.Commands;
 using RiskIt.ConsoleGame.Models;
 using RiskIt.Main;
-using RiskIt.Main.Actions;
-using RiskIt.Main.AttackHandlers;
-using RiskIt.Main.Events;
 using RiskIt.Main.MapGeneration;
 using RiskIt.Main.Models;
-using RiskIt.Main.Models.Enums;
 using Newtonsoft.Json;
+using RiskIt.Main.Persist;
 
 namespace RiskIt.ConsoleGame
 {
@@ -19,18 +16,12 @@ namespace RiskIt.ConsoleGame
 
         public static void Main(string[] args)
         {
-            Game<string>? game = null;
-            int diceSeed = 0;
+            GameServer<string> gameServer = new GameServer<string>();
 
             GameClient[] gameClients = new GameClient[PLAYER_COUNT];
+
+            // FIX: This actually points to a null
             GameClient activePlayer = gameClients[0];
-
-            // probably not actually needed
-            // a log of all events sent from the game to clients
-            List<GameEvent> gameEvents = new List<GameEvent>();
-
-            // the log of all actions done to the game
-            List<GameAction<string>> gameActions = new List<GameAction<string>>();
 
             AreaEnumeratorFactory<string> areaEnumeratorFactory = new AreaEnumeratorFactory<string>();
             MapSeeder<string> mapSeeder = new MapSeeder<string>(areaEnumeratorFactory);
@@ -49,7 +40,7 @@ namespace RiskIt.ConsoleGame
             {
 
                 string? input;
-                if (game is null) input = "server startgame"; // quick start game to see map
+                if (!gameServer.GameStarted()) input = "server startgame"; // quick start game to see map
                 else input = Console.ReadLine();
 
                 if (input.Trim().ToLowerInvariant() == "exit") return;
@@ -58,7 +49,7 @@ namespace RiskIt.ConsoleGame
 
                 if (comm is null) continue;
 
-                if (!comm.GetType().Equals(typeof(ServerCommand)) && game is null)
+                if (!comm.GetType().Equals(typeof(ServerCommand)) && !gameServer.GameStarted())
                 {
                     Console.WriteLine("No game started");
                     continue;
@@ -68,21 +59,13 @@ namespace RiskIt.ConsoleGame
 
                 if (commandType.Equals(typeof(ServerCommand)))
                 {
-                    // TODO:: Extract everything into "GameServer" layer ?
-                    void HandleGameEvent(GameEvent gameEvent)
-                    {
-                        gameEvents.Add(gameEvent);
-                        PropagateEvent(gameEvent: gameEvent, gameClients: gameClients, activePlayer: ref activePlayer);
-                    }
-
                     var serverComm = comm as ServerCommand;
                     try
                     {
-
-
                     switch (serverComm.CommandType)
                     {
                         case ServerCommandType.StartGame:
+
                             GameConfig cfg = serverComm.GameConfig;
                             cfg.PlayerCount = PLAYER_COUNT;
                             cfg.MapId = MAP_ID;
@@ -90,45 +73,44 @@ namespace RiskIt.ConsoleGame
                             MapGenerator<string> mapGenerator = GetMapGeneratorById(cfg.MapId);
 
                             Player[] players = CreatePlayers(cfg.PlayerCount);
-                            gameClients = players.Select(p => new GameClient(p)).ToArray();
 
-                            Random rand = new Random();
-                                diceSeed = rand.Next();
+                                // TODO: should the flow be 
+                                // 1. setup client
+                                // 2. registers clients on server
+                                // 3. setup game
+                                // or is this fine ?
+                                gameServer.SetupGame(cfg, mapSeeder, mapGenerator);
 
-                            GameBuilder<string> builder = new GameBuilder<string>();
-                            builder.Players = players;
-                            builder.MapGenerator = mapGenerator;
-                            builder.MapSeeder = mapSeeder;
-                            builder.PlayerStartingTroops = 20;
-                            builder.AreaDistributionType = AreaDistributionType.Simple;
-                            builder.AttackHandlerType = AttackHandlerType.Normal;
-                            builder.Dice = new RandomDice(diceSeed);
-                            builder.OnEventCallBack = HandleGameEvent;
+                                gameClients = players.Select(p => new GameClient(gameServer, p)).ToArray();
+                                activePlayer = gameClients[0];
 
-                            game = builder.Build();
+                                foreach (GameClient gameClient in gameClients)
+                                {
+                                    gameServer.RegisterGameClient(gameClient.HandleEvent);
+                                }
 
-                            Console.WriteLine("New game started with id \"{0}\"", game.Id);
-                            Console.WriteLine("Using seed \"{0}\" for dice", diceSeed);
+
+                                // TODO: Implement back that a new game has started etc
+                                // Console.WriteLine("New game started with id \"{0}\"", game.Id);
+                                // Console.WriteLine("Using seed \"{0}\" for dice", diceSeed);
+
 
                             // print state of start game
                             Console.WriteLine(GetStateAsString(activePlayer));
-                            PrintPaintAreasToConsole(MapVisualizer.PrintMap(game.GetMapAreas(), CreateMapId1(MAP_VISUALIZE_DIM)));
+                                PrintPaintAreasToConsole(
+                                        MapVisualizer.PrintMap(
+                                            gameServer.GetGameMap(),
+                                            CreateMapId1(MAP_VISUALIZE_DIM)));
 
                             break;
                         case ServerCommandType.EndGame:
-                            // TODO: Persist game before destruction ?
-                            Guid gameId = game!.Id;
-                            game = null;
 
-                                GameRecord<string> gameResult = new GameRecord<string>(
-                                        gameId,
-                                        diceSeed,
-                                        gameActions.Select(action => TypeWrapper<string>.WrapAction(action))
-                                );
+                                // TODO: Should this end the game or just persist it to file ?
+                                GameRecord<string> gameResult = gameServer.GetGameRecord();
 
                                 SaveGameToFile(gameResult);
 
-                            Console.WriteLine("Game with id \"{0}\" has been terminated", gameId);
+                                Console.WriteLine("Game with id \"{0}\" has been saved (maybe terminated)", gameResult.GameId);
                             break;
                         default:
                             break;
@@ -146,33 +128,15 @@ namespace RiskIt.ConsoleGame
 
                 if (commandType.Equals(typeof(GameCommand)))
                 {
-                    ((GameCommand)comm).GameClient = GetCurrentGameClient(gameClients);
-                    GameAction<string> action;
+                    GameClient currClient = GetCurrentGameClient(gameClients);
 
-                    try
-                    {
-                        action = (comm as GameCommand).ToAction();
+                    GameCommand gameCommand = (GameCommand)comm;
+                    gameCommand.GameClient = currClient;
 
-                        // so far, just write all actions to the log
-                        // TODO: Only write the actions that succeeded to the log
-                        gameActions.Add(action);
+                    comm = currClient.HandleGameCommand(gameCommand) ?? comm;
 
-                        GameplayValidationType validation = game!.HandleAction(action);
-                        if (validation != GameplayValidationType.Success)
-                        {
-                            // TODO: Add handling of action if wrong action
-                            Console.WriteLine(validation.ToString());
-                        }
                         Console.WriteLine(GetStateAsString(activePlayer));
                     }
-                    catch (Exception e)
-                    {
-#if DEBUG
-                        Console.WriteLine(e.Message);
-#endif
-                        comm = DisplayCommand.CreateUnknownCommand();
-                    }
-                }
 
                 if (comm.GetType().Equals(typeof(DisplayCommand)))
                 {
@@ -181,7 +145,7 @@ namespace RiskIt.ConsoleGame
                     {
                         case DisplayCommandType.Map:
                             PrintPaintAreasToConsole(
-                                    MapVisualizer.PrintMap(game!.GetMapAreas(),
+                                    MapVisualizer.PrintMap(gameServer.GetGameMap(),
                                         CreateMapId1(MAP_VISUALIZE_DIM)));
                             break;
                         default:
@@ -214,55 +178,6 @@ namespace RiskIt.ConsoleGame
             var playerTurn = gameClient.PlayerTurn;
 
             return $"Active player: {playerTurn.Player.ToString()} | Phase: {playerTurn.Turn.Phase}";
-        }
-
-        private static void PropagateEvent(GameEvent gameEvent, GameClient[] gameClients, ref GameClient activePlayer)
-        {
-            switch (gameEvent.GetType())
-            {
-
-                case var type when type == typeof(PhaseAdvancedEvent):
-                    foreach (var client in gameClients)
-                    {
-                        client.PlayerTurn.Turn.AdvanceTurn();
-                    }
-                    break;
-
-                case var type when type == typeof(PlayerTurnChangedEvent):
-                    activePlayer = gameClients
-                        .Where(p => p.Player.Id == ((PlayerTurnChangedEvent)gameEvent).NextPlayerId)
-                        .FirstOrDefault();
-
-                    foreach (var client in gameClients)
-                    {
-                        client.PlayerTurn = new PlayerTurn
-                        {
-                            Player = activePlayer.Player,
-                            Turn = new Turn()
-                        };
-                    }
-                    break;
-
-                case var type when type == typeof(GameStartEvent):
-                    activePlayer = gameClients
-                        .Where(p => p.Player.Id == ((GameStartEvent)gameEvent).NextPlayerId)
-                        .FirstOrDefault();
-
-                    foreach (var client in gameClients)
-                    {
-                        client.PlayerTurn = new PlayerTurn
-                        {
-                            Player = activePlayer.Player,
-                            Turn = new Turn()
-                        };
-                        ;
-                    }
-
-                    break;
-
-                default:
-                    throw new Exception("Doing this later");
-            }
         }
 
         private static GameClient GetCurrentGameClient(GameClient[] gameClients)

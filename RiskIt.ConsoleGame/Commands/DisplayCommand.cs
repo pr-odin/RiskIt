@@ -78,5 +78,6 @@ Fortify phase:
         Unknown,
         Help,
         Map,
+        Display,
     }
 }

@@ -1,4 +1,4 @@
-﻿namespace RiskIt.ConsoleGame
+﻿namespace RiskIt.Main
 {
     public class GameConfig
     {

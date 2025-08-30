@@ -1,6 +1,6 @@
 ﻿using RiskIt.Main.Actions;
 
-namespace RiskIt.ConsoleGame.Models
+namespace RiskIt.Main.Persist
 {
     public class TypeWrapper<T> where T : IComparable<T>
     {

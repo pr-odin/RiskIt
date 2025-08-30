@@ -1,6 +1,4 @@
-﻿using RiskIt.ConsoleGame.Models;
-
-namespace RiskIt.ConsoleGame
+﻿namespace RiskIt.Main.Persist
 {
     public class GameRecord<T> where T : IComparable<T>
     {

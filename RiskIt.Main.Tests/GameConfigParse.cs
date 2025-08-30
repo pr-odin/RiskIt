@@ -1,6 +1,4 @@
-﻿using RiskIt.ConsoleGame;
-
-namespace Riskit.ConsoleGame.Tests
+﻿namespace RiskIt.Main.Tests
 {
     public class GameConfigParse
     {

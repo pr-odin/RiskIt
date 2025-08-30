@@ -1,4 +1,4 @@
-﻿using RiskIt.ConsoleGame;
+﻿using RiskIt.Main;
 
 namespace RiskIt.ConsoleGame.Commands
 {
