@@ -7,7 +7,7 @@ namespace RiskIt.ConsoleGame.Models
         public string? Type;
         public object? Data;
 
-        public static TypeWrapper<T> SerializeWithType(GameAction<T> action)
+        public static TypeWrapper<T> WrapAction(GameAction<T> action)
         {
             var wrapper = new TypeWrapper<T>
             {

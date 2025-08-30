@@ -40,8 +40,20 @@ namespace RiskIt.Main
             EventCallBack(gameStartEvent);
         }
 
+        private bool GameHasEnded()
+        {
+            int firstPlayerId = _map.Values.FirstOrDefault().Player.Id;
+            if (_map.Values.All(area => area.Player.Id.Equals(firstPlayerId)))
+                return true;
+
+            return false;
+        }
         public GameplayValidationType HandleAction(GameAction<T> action)
         {
+            // TODO: put this BEFORE sending the final event
+            // so probably where we advance turn
+            if (GameHasEnded()) return GameplayValidationType.GameEnded;
+
             GameplayValidationType? retVal = null;
             switch (action.GetType())
             {

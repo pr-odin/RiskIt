@@ -20,6 +20,8 @@ namespace RiskIt.ConsoleGame
         public static void Main(string[] args)
         {
             Game<string>? game = null;
+            int diceSeed = 0;
+
             GameClient[] gameClients = new GameClient[PLAYER_COUNT];
             GameClient activePlayer = gameClients[0];
 
@@ -91,7 +93,7 @@ namespace RiskIt.ConsoleGame
                             gameClients = players.Select(p => new GameClient(p)).ToArray();
 
                             Random rand = new Random();
-                            var diceSeed = rand.Next();
+                                diceSeed = rand.Next();
 
                             GameBuilder<string> builder = new GameBuilder<string>();
                             builder.Players = players;
@@ -117,6 +119,14 @@ namespace RiskIt.ConsoleGame
                             // TODO: Persist game before destruction ?
                             Guid gameId = game!.Id;
                             game = null;
+
+                                GameRecord<string> gameResult = new GameRecord<string>(
+                                        gameId,
+                                        diceSeed,
+                                        gameActions.Select(action => TypeWrapper<string>.WrapAction(action))
+                                );
+
+                                SaveGameToFile(gameResult);
 
                             Console.WriteLine("Game with id \"{0}\" has been terminated", gameId);
                             break;
@@ -146,9 +156,6 @@ namespace RiskIt.ConsoleGame
                         // so far, just write all actions to the log
                         // TODO: Only write the actions that succeeded to the log
                         gameActions.Add(action);
-
-                        var jsonAction = JsonConvert.SerializeObject(TypeWrapper<string>.SerializeWithType(action));
-                        Console.WriteLine($"Action as json: {jsonAction}");
 
                         GameplayValidationType validation = game!.HandleAction(action);
                         if (validation != GameplayValidationType.Success)
@@ -182,25 +189,26 @@ namespace RiskIt.ConsoleGame
                             break;
                     }
                     continue;
-
                 }
 
-                if (commandType.Equals(typeof(GameCommand)))
-                {
-                    ((GameCommand)comm).GameClient = GetCurrentGameClient(gameClients);
-                    GameAction<string> action = (comm as GameCommand).ToAction();
-                    //
-                    GameplayValidationType validation = game!.HandleAction(action);
-                    if (validation != GameplayValidationType.Success)
-                    {
-                        // TODO: Add handling of action if wrong action
-                        Console.WriteLine(validation.ToString());
-                    }
-                    Console.WriteLine(GetStateAsString(activePlayer));
                 }
-            }
         }
 
+        private static void SaveGameToFile(GameRecord<string> gameResult)
+                {
+            string path = AppDomain.CurrentDomain.BaseDirectory;
+
+            string fileName = gameResult.GameId + ".txt";
+
+            path = path + "GamesLog\\";
+
+            Directory.CreateDirectory(path);
+
+            string fullFileName = path + fileName;
+
+            FileHandler.WriteToFile(path: fullFileName,
+                                   content: JsonConvert.SerializeObject(gameResult));
+        }
         private static string GetStateAsString(GameClient gameClient)
         {
             var playerTurn = gameClient.PlayerTurn;
