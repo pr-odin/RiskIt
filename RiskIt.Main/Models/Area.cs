@@ -23,9 +23,53 @@
             other.Connections[Id] = this;
         }
 
+        public bool IsAdjecent(Area<T> other)
+        {
+            return Connections.ContainsKey(other.Id);
+        }
+
+        public bool CanReach(Area<T> other)
+        {
+            if (IsAdjecent(other) && Player == other.Player)
+                return true;
+
+            HashSet<T> visited = new HashSet<T>();
+            visited.Add(this.Id);
+
+            return Search(other,
+                          FriendlyAreas(other.Player),
+                          visited);
+        }
+
+        private IEnumerable<Area<T>> FriendlyAreas(Player p) =>
+            this.Connections.Values.Where(a => a.Player == p);
+
+        private bool Search(Area<T> other,
+                            IEnumerable<Area<T>> areas,
+                            HashSet<T> visited)
+        {
+            if (areas.Count() == 0) return false;
+
+            foreach (Area<T> area in areas)
+            {
+                if (area == other) return true;
+
+                if (!visited.Add(area.Id)) continue;
+
+                if (area.Search(other, area.FriendlyAreas(other.Player), visited)) return true;
+            }
+
+            return false;
+        }
+
         public override string ToString()
         {
             return $"Id: {Id.ToString()}, Troops: {Troops.ToString()}, Player: {_playerText}";
+        }
+
+        public override bool Equals(object? obj)
+        {
+            return ReferenceEquals(this, obj);
         }
     }
 }

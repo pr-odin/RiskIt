@@ -78,8 +78,8 @@ namespace RiskIt.Main
                         AdvanceTurn();
 
                     break;
-                case var type when type == typeof(FinishTurnAction<T>):
-                    retVal = HandleFinishTurnAction((FinishTurnAction<T>)action);
+                case var type when type == typeof(SkipTurnAction<T>):
+                    retVal = HandleFinishTurnAction((SkipTurnAction<T>)action);
 
                     if (retVal == GameplayValidationType.Success)
                         AdvanceTurn();
@@ -132,6 +132,9 @@ namespace RiskIt.Main
             if (action.AttackingTroops + 1 > attacker.Troops)
                 return GameplayValidationType.TooManyTroops;
 
+            if (!attacker.IsAdjecent(defender))
+                return GameplayValidationType.AreaUnreachable;
+
 
             // insert some attacking here
             var br = _attackHandler.BattleResult(action.AttackingTroops, defender.Troops);
@@ -158,7 +161,8 @@ namespace RiskIt.Main
             }
         }
 
-        private GameplayValidationType HandleFinishTurnAction(FinishTurnAction<T> action)
+
+        private GameplayValidationType HandleFinishTurnAction(SkipTurnAction<T> action)
         {
             if (GameTurn.Turn.Phase == Phase.Placement)
                 return GameplayValidationType.WrongPhase;
@@ -187,6 +191,9 @@ namespace RiskIt.Main
 
             if (!from.Player.Equals(GameTurn.Player))
                 return GameplayValidationType.NotPlayerTurn;
+
+            if (!from.CanReach(to))
+                return GameplayValidationType.AreaUnreachable;
 
             from.Troops -= action.Amount;
             to.Troops += action.Amount;

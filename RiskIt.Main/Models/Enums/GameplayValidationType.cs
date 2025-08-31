@@ -11,5 +11,6 @@
         SamePlayersArea,
         TooManyTroops,
         AreaUnoccupied,
+        AreaUnreachable,
     }
 }
