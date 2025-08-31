@@ -34,6 +34,10 @@ namespace RiskIt.ConsoleGame.Commands
                     };
 
                 case GameCommandType.Attack:
+
+                    if (_args[0] == "s" || _args[0] == "skip")
+                        return new FinishTurnAction<string>();
+
                     string attackerName = _args[0];
                     int attackerTroops = int.Parse(_args[1]);
                     string defenderName = _args[2];
@@ -45,6 +49,10 @@ namespace RiskIt.ConsoleGame.Commands
                     };
 
                 case GameCommandType.Fortify:
+
+                    if (_args[0] == "s" || _args[0] == "skip")
+                        return new FinishTurnAction<string>();
+
                     string fromName = _args[0];
                     int amount = int.Parse(_args[1]);
                     string toName = _args[2];

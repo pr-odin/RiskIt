@@ -48,6 +48,7 @@ namespace RiskIt.Main
 
             return false;
         }
+
         public GameplayValidationType HandleAction(GameAction<T> action)
         {
             // TODO: put this BEFORE sending the final event
@@ -59,6 +60,11 @@ namespace RiskIt.Main
             {
                 case var type when type == typeof(PlacementAction<T>):
                     retVal = HandlePlacementAction((PlacementAction<T>)action);
+
+                    if (retVal == GameplayValidationType.Success
+                        && (GameTurn.Turn.Phase != Phase.Placement || _placementHandler.IsFinished))
+                        AdvanceTurn();
+
                     break;
 
                 case var type when type == typeof(AttackAction<T>):
@@ -67,20 +73,20 @@ namespace RiskIt.Main
 
                 case var type when type == typeof(FortifyAction<T>):
                     retVal = HandleFortifyAction((FortifyAction<T>)action);
+
+                    if (retVal == GameplayValidationType.Success)
+                        AdvanceTurn();
+
                     break;
+                case var type when type == typeof(FinishTurnAction<T>):
+                    retVal = HandleFinishTurnAction((FinishTurnAction<T>)action);
 
+                    if (retVal == GameplayValidationType.Success)
+                        AdvanceTurn();
+
+                    break;
             }
 
-            if (retVal is null)
-                return GameplayValidationType.DefaultCase;
-
-            if (retVal == GameplayValidationType.Success)
-            {
-                if (GameTurn.Turn.Phase != Phase.Placement || _placementHandler.IsFinished)
-                    AdvanceTurn();
-            }
-
-            // not actually default case ever, but to make compiler happy
             return retVal ?? GameplayValidationType.DefaultCase;
         }
 
@@ -150,6 +156,14 @@ namespace RiskIt.Main
                 defender.Player = attacker.Player;
                 defender.Troops = battleResult.AttackingTroops;
             }
+        }
+
+        private GameplayValidationType HandleFinishTurnAction(FinishTurnAction<T> action)
+        {
+            if (GameTurn.Turn.Phase == Phase.Placement)
+                return GameplayValidationType.WrongPhase;
+
+            return GameplayValidationType.Success;
         }
 
         private GameplayValidationType HandleFortifyAction(FortifyAction<T> action)

@@ -81,7 +81,12 @@ namespace RiskIt.Main
             GameplayValidationType validation = _game.HandleAction(gameAction);
 
             if (validation == GameplayValidationType.GameEnded)
+            {
+                // TODO: extract to method to later be
+                // able to get call who won the game etc
                 _game = null;
+                _gameStarted = false;
+            }
 
             return validation;
 
