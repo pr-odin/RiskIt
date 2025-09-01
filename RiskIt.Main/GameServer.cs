@@ -26,6 +26,8 @@ namespace RiskIt.Main
         // keeping while refactoring (hi me from 1 year later)
         private List<GameEvent> _gameEvents;
 
+        private Action<GameAction<T>[]>? saveGameEvents = null;
+
         public bool GameStarted() => _gameStarted;
         // this used to be _game == null, but this way its a single bit
         // not sure if this actually matters but in my brain it make more
@@ -86,6 +88,9 @@ namespace RiskIt.Main
                 // able to get call who won the game etc
                 _game = null;
                 _gameStarted = false;
+
+                if (saveGameEvents != null)
+                    saveGameEvents(_gameActions.ToArray());
             }
 
             return validation;
@@ -108,8 +113,39 @@ namespace RiskIt.Main
             _gameEventHandlers.Add(gameEventHandler);
         }
 
+        public void RegisterSaveGameActions(Action<GameAction<T>[]> saveGameEvents)
+        {
+            this.saveGameEvents = saveGameEvents;
+        }
+
         // TODO: fix the signature to not include everyone and their friends
-        public void SetupGame(GameConfig cfg, MapSeeder<T> mapSeeder, MapGenerator<T> mapGenerator)
+        public GameSetupResult SetupReplay(GameConfig cfg,
+                                           MapSeeder<T> mapSeeder,
+                                           MapGenerator<T> mapGenerator,
+                                           int diceSeed)
+        {
+            if (GameStarted()) throw new Exception("Smth like 'An active game is already ongoing!!', I think");
+
+            Player[] players = CreatePlayers(cfg.PlayerCount);
+
+            _diceSeed = diceSeed;
+
+            GameBuilder<T> builder = new GameBuilder<T>();
+            builder.Players = players;
+            builder.MapGenerator = mapGenerator;
+            builder.MapSeeder = mapSeeder;
+            builder.PlayerStartingTroops = 20;
+            builder.AreaDistributionType = AreaDistributionType.Simple;
+            builder.AttackHandlerType = AttackHandlerType.Normal;
+            builder.Dice = new RandomDice(_diceSeed);
+            builder.OnEventCallBack = HandleGameEvent;
+
+            _game = builder.Build();
+            _gameStarted = true;
+
+            return new GameSetupResult { GameId = _game.Id, DiceSeed = _diceSeed };
+        }
+        public GameSetupResult SetupGame(GameConfig cfg, MapSeeder<T> mapSeeder, MapGenerator<T> mapGenerator)
         {
             if (GameStarted()) throw new Exception("Smth like 'An active game is already ongoing!!', I think");
 
@@ -130,6 +166,8 @@ namespace RiskIt.Main
 
             _game = builder.Build();
             _gameStarted = true;
+
+            return new GameSetupResult { GameId = _game.Id, DiceSeed = _diceSeed };
         }
 
         // TODO: Make this... otherwise :D
@@ -147,5 +185,11 @@ namespace RiskIt.Main
         }
 
         #endregion
+    }
+
+    public class GameSetupResult
+    {
+        public Guid GameId { get; set; }
+        public int DiceSeed { get; set; }
     }
 }

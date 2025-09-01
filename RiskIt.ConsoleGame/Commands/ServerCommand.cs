@@ -16,8 +16,13 @@ namespace RiskIt.ConsoleGame.Commands
             switch (inputArgs)
             {
                 case "startgame":
+                    CommandType = ServerCommandType.StartGame;
+
                     GameConfig = new GameConfig();
                     GameConfig.Parse(args[1..^0]);
+                    return;
+                case "startreplay":
+                    CommandType = ServerCommandType.ReplayGame;
                     return;
                 case "endgame":
                     CommandType = ServerCommandType.EndGame;
@@ -30,6 +35,7 @@ namespace RiskIt.ConsoleGame.Commands
     public enum ServerCommandType
     {
         StartGame,
-        EndGame
+        EndGame,
+        ReplayGame
     }
 }

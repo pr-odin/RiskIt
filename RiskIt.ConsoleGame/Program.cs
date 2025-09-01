@@ -5,6 +5,7 @@ using RiskIt.Main.MapGeneration;
 using RiskIt.Main.Models;
 using Newtonsoft.Json;
 using RiskIt.Main.Persist;
+using RiskIt.Main.Actions;
 
 namespace RiskIt.ConsoleGame
 {
@@ -19,12 +20,14 @@ namespace RiskIt.ConsoleGame
             GameServer<string> gameServer = new GameServer<string>();
 
             GameClient[] gameClients = new GameClient[PLAYER_COUNT];
+            ReplayClient? replayClient = null;
 
             // FIX: This actually points to a null
             GameClient activePlayer = gameClients[0];
 
             AreaEnumeratorFactory<string> areaEnumeratorFactory = new AreaEnumeratorFactory<string>();
             MapSeeder<string> mapSeeder = new MapSeeder<string>(areaEnumeratorFactory);
+            MapGenerator<string> mapGenerator;
             ConsoleParser parser = new ConsoleParser();
 
 
@@ -39,9 +42,11 @@ namespace RiskIt.ConsoleGame
             while (true)
             {
 
-                string? input;
-                if (!gameServer.GameStarted()) input = "server startgame"; // quick start game to see map
-                else input = Console.ReadLine();
+                // string? input;
+                // if (!gameServer.GameStarted()) input = "server startgame"; // quick start game to see map
+                // else input = Console.ReadLine();
+
+                string? input = Console.ReadLine();
 
                 if (input.Trim().ToLowerInvariant() == "exit") return;
 
@@ -62,24 +67,24 @@ namespace RiskIt.ConsoleGame
                     var serverComm = comm as ServerCommand;
                     try
                     {
-                    switch (serverComm.CommandType)
-                    {
-                        case ServerCommandType.StartGame:
+                        switch (serverComm.CommandType)
+                        {
+                            case ServerCommandType.StartGame:
 
-                            GameConfig cfg = serverComm.GameConfig;
-                            cfg.PlayerCount = PLAYER_COUNT;
-                            cfg.MapId = MAP_ID;
+                                GameConfig cfg = serverComm.GameConfig;
+                                cfg.PlayerCount = PLAYER_COUNT;
+                                cfg.MapId = MAP_ID;
 
-                            MapGenerator<string> mapGenerator = GetMapGeneratorById(cfg.MapId);
+                                mapGenerator = GetMapGeneratorById(cfg.MapId);
 
-                            Player[] players = CreatePlayers(cfg.PlayerCount);
+                                Player[] players = CreatePlayers(cfg.PlayerCount);
 
                                 // TODO: should the flow be 
                                 // 1. setup client
                                 // 2. registers clients on server
                                 // 3. setup game
                                 // or is this fine ?
-                                gameServer.SetupGame(cfg, mapSeeder, mapGenerator);
+                                GameSetupResult gameSetupResult = gameServer.SetupGame(cfg, mapSeeder, mapGenerator);
 
                                 gameClients = players.Select(p => new GameClient(gameServer, p)).ToArray();
                                 activePlayer = gameClients[0];
@@ -89,21 +94,72 @@ namespace RiskIt.ConsoleGame
                                     gameServer.RegisterGameClient(gameClient.HandleEvent);
                                 }
 
+                                void SaveGameState(GameAction<string>[] gameActions)
+                                {
+                                    IEnumerable<TypeWrapper<string>> wrappedActions = gameActions
+                                        .Select(e => TypeWrapper<string>.WrapAction(e));
+
+                                    GameRecord<string> gameRecord = new GameRecord<string>(gameSetupResult.GameId,
+                                                                                           gameSetupResult.DiceSeed,
+                                                                                           wrappedActions);
+                                    SaveGameToFile(gameRecord);
+                                }
+
+                                gameServer.RegisterSaveGameActions(SaveGameState);
 
                                 // TODO: Implement back that a new game has started etc
                                 // Console.WriteLine("New game started with id \"{0}\"", game.Id);
                                 // Console.WriteLine("Using seed \"{0}\" for dice", diceSeed);
 
 
-                            // print state of start game
-                            Console.WriteLine(GetStateAsString(activePlayer));
+                                // print state of start game
+                                Console.WriteLine(GetStateAsString(activePlayer));
                                 PrintPaintAreasToConsole(
                                         MapVisualizer.PrintMap(
                                             gameServer.GetGameMap(),
                                             CreateMapId1(MAP_VISUALIZE_DIM)));
 
-                            break;
-                        case ServerCommandType.EndGame:
+                                break;
+                            case ServerCommandType.ReplayGame:
+                                GameConfig replayCfg = new GameConfig();
+                                replayCfg.PlayerCount = PLAYER_COUNT;
+                                replayCfg.MapId = MAP_ID;
+
+                                mapGenerator = GetMapGeneratorById(replayCfg.MapId);
+
+
+                                string path = AppDomain.CurrentDomain.BaseDirectory
+                                    + "GamesLog\\"
+                                    + "0869d4e2-dec8-4dae-817a-5cc7f1eb7ed6.txt";
+                                GameRecord<string> gameRecord = LoadFromFile(path);
+                                GameAction<string>[] gameActions = gameRecord.Actions
+                                    .Select(typeWrapper => typeWrapper.UnwrapAction())
+                                    .ToArray<GameAction<string>>();
+
+                                replayClient = new ReplayClient(gameServer, gameActions);
+
+                                gameServer.SetupReplay(replayCfg,
+                                                       mapSeeder,
+                                                       mapGenerator,
+                                                       gameRecord.DiceSeed);
+
+                                // TODO: probably make it a register REPLAY client
+                                gameServer.RegisterGameClient(replayClient.HandleEvent);
+
+
+
+                                // TODO: Implement back that a new game has started etc
+                                // Console.WriteLine("New game started with id \"{0}\"", game.Id);
+                                // Console.WriteLine("Using seed \"{0}\" for dice", diceSeed);
+
+
+                                PrintPaintAreasToConsole(
+                                        MapVisualizer.PrintMap(
+                                            gameServer.GetGameMap(),
+                                            CreateMapId1(MAP_VISUALIZE_DIM)));
+
+                                break;
+                            case ServerCommandType.EndGame:
 
                                 // TODO: Should this end the game or just persist it to file ?
                                 GameRecord<string> gameResult = gameServer.GetGameRecord();
@@ -111,18 +167,34 @@ namespace RiskIt.ConsoleGame
                                 SaveGameToFile(gameResult);
 
                                 Console.WriteLine("Game with id \"{0}\" has been saved (maybe terminated)", gameResult.GameId);
-                            break;
-                        default:
-                            break;
+                                break;
+                            default:
+                                break;
+                        }
+                        continue;
                     }
-                    continue;
-                }
                     catch (Exception e)
                     {
 #if DEBUG
                         Console.WriteLine(e.Message);
 #endif
                         comm = DisplayCommand.CreateUnknownCommand();
+                    }
+                }
+                if (commandType.Equals(typeof(ReplayCommand)))
+                {
+                    // TODO: normal error handling and not crash/unknown command
+                    if (replayClient is null)
+                        throw new Exception("No replay client");
+
+                    if (!replayClient.NextAction())
+                        Console.WriteLine("Replay has ended");
+                    else
+                    {
+                        comm = new DisplayCommand()
+                        {
+                            DisplayCommandType = DisplayCommandType.Map,
+                        };
                     }
                 }
 
@@ -135,8 +207,8 @@ namespace RiskIt.ConsoleGame
 
                     comm = currClient.HandleGameCommand(gameCommand) ?? comm;
 
-                        Console.WriteLine(GetStateAsString(activePlayer));
-                    }
+                    Console.WriteLine(GetStateAsString(activePlayer));
+                }
 
                 if (comm.GetType().Equals(typeof(DisplayCommand)))
                 {
@@ -155,24 +227,37 @@ namespace RiskIt.ConsoleGame
                     continue;
                 }
 
-                }
+            }
         }
 
+
         private static void SaveGameToFile(GameRecord<string> gameResult)
-                {
-            string path = AppDomain.CurrentDomain.BaseDirectory;
+        {
+            string path = AppDomain.CurrentDomain.BaseDirectory + "GamesLog\\";
 
             string fileName = gameResult.GameId + ".txt";
 
-            path = path + "GamesLog\\";
 
             Directory.CreateDirectory(path);
 
             string fullFileName = path + fileName;
 
             FileHandler.WriteToFile(path: fullFileName,
-                                   content: JsonConvert.SerializeObject(gameResult));
+                                    content: JsonConvert.SerializeObject(gameResult));
         }
+
+        private static GameRecord<string> LoadFromFile(string path)
+        {
+            string jsonDoc = FileHandler.ReadFromFile(path);
+
+            GameRecord<string>? gameRecord = JsonConvert.DeserializeObject<GameRecord<string>>(jsonDoc);
+
+            if (gameRecord is null)
+                throw new Exception("Could not load game record");
+
+            return gameRecord;
+        }
+
         private static string GetStateAsString(GameClient gameClient)
         {
             var playerTurn = gameClient.PlayerTurn;

@@ -13,6 +13,7 @@ namespace RiskIt.ConsoleGame
 
             ICommand command;
 
+            // TODO: refactor this... working code ;)
             if (items[0] == "?")
             {
                 command = new DisplayCommand();
@@ -27,6 +28,11 @@ namespace RiskIt.ConsoleGame
             {
                 command = new ServerCommand();
                 command.Parse(items[1..^0]);
+            }
+            else if (items[0] == "next")
+            {
+                command = new ReplayCommand();
+                command.Parse(items);
             }
             else
             {

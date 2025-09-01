@@ -4,7 +4,7 @@ namespace RiskIt.Main.Actions
     {
         public override string TypeAsString()
         {
-            return "FinishTurnAction";
+            return "SkipTurnAction";
         }
     }
 }

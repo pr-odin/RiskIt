@@ -43,11 +43,14 @@ namespace RiskIt.ConsoleGame.Commands
             Text =
                 @"
 Help text:
+
 ----------------------------DISPLAY ACTIONS---------------------------
 'disp map'                      - displays current map
+
 ----------------------------SERVER ACTIONS----------------------------
 'server startgame'              - starts a new game
 'server endgame'                - ends current game
+
 -----------------------------GAME ACTIONS-----------------------------
 Placement phase:
 [Area] [Troops]                 - Place [Troops] on [Area]
@@ -68,6 +71,10 @@ Fortify phase:
 Finishing turn:
 s OR skip                       - Skips the current phase when in
                                 - attack or fortify phase
+
+-----------------------------REPLAY ACTIONS----------------------------
+Next action taken:
+n OR next                       - Plays the next action in the game
 ";
         }
 

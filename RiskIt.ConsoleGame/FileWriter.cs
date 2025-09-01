@@ -12,7 +12,11 @@
 
         public static string ReadFromFile(string path)
         {
-            throw new NotImplementedException();
+            // Open the text file using a stream reader.
+            using StreamReader reader = new(path);
+
+            // Read the stream as a string.
+            return reader.ReadToEnd();
         }
     }
 }
