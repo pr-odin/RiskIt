@@ -25,6 +25,9 @@ namespace RiskIt.ConsoleGame.Commands
                 case "map":
                     DisplayCommandType = DisplayCommandType.Map;
                     break;
+                case "replays":
+                    DisplayCommandType = DisplayCommandType.Replays;
+                    break;
                 default:
                     // TODO: This is actually unreachable. Due to.. 
                     // technical difficulties... yeah...
@@ -45,11 +48,26 @@ namespace RiskIt.ConsoleGame.Commands
 Help text:
 
 ----------------------------DISPLAY ACTIONS---------------------------
-'disp map'                      - displays current map
+Prefix 'disp'                   - when using a display command, prefix
+                                - it with 'disp'. A valid command is
+                                - 'disp map' whereas 'map' is not valid
+
+'map'                      - displays current map
+'replays'                       - displays available replay files
+                                - can be used to feed 'startreplay'
 
 ----------------------------SERVER ACTIONS----------------------------
-'server startgame'              - starts a new game
-'server endgame'                - ends current game
+Prefix 'server'                 - when using a server command, prefix
+                                - it with 'server'. A valid command is
+                                - 'server startgame' whereas 
+                                - 'startgame' is not valid
+
+'startgame'                     - starts a new game
+'endgame'                       - ends current game
+'startreplay [filename]'        - start the replay with the name 
+                                - [filename]. Remember the extension
+                                - Can be advantageously used with 
+                                - 'disp replays'
 
 -----------------------------GAME ACTIONS-----------------------------
 Placement phase:
@@ -89,5 +107,6 @@ n OR next                       - Plays the next action in the game
         Help,
         Map,
         Display,
+        Replays,
     }
 }

@@ -14,10 +14,13 @@ namespace RiskIt.ConsoleGame
 
         private GameServer<string> _gameServer;
 
+        private Action<int> _gameEnded;
 
-        public GameClient(GameServer<string> gameServer, Player player)
+
+        public GameClient(GameServer<string> gameServer, Player player, Action<int> gameEnded)
         {
             _gameServer = gameServer;
+            _gameEnded = gameEnded;
 
             Player = player;
             PlayerTurn = new PlayerTurn();
@@ -95,6 +98,11 @@ namespace RiskIt.ConsoleGame
                         Turn = new Turn()
                     };
 
+                    break;
+
+                case var type when type == typeof(GameEndedEvent):
+                    GameEndedEvent gameEndedEvent = (GameEndedEvent)gameEvent;
+                    _gameEnded(gameEndedEvent.WonPlayerId);
                     break;
 
                 default:

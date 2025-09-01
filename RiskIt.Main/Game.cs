@@ -87,6 +87,15 @@ namespace RiskIt.Main
                     break;
             }
 
+            if (GameHasEnded())
+            {
+                // the dude who won... not sure how else to write that
+                // this only works because there are no other players with areas
+                int WonPlayerId = _map.Values.FirstOrDefault().Player.Id;
+                GameEndedEvent gameEndedEvent = new GameEndedEvent(WonPlayerId);
+                _eventCallBack(gameEndedEvent);
+            }
+
             return retVal ?? GameplayValidationType.DefaultCase;
         }
 

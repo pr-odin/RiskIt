@@ -14,6 +14,9 @@ namespace RiskIt.ConsoleGame
         public static readonly int PLAYER_COUNT = 2;
         public static readonly int MAP_ID = 1;
         public static readonly int MAP_VISUALIZE_DIM = 5;
+        public static readonly string REPLAY_PATH = AppDomain.CurrentDomain.BaseDirectory + "GamesLog\\";
+
+
 
         public static void Main(string[] args)
         {
@@ -41,11 +44,6 @@ namespace RiskIt.ConsoleGame
 
             while (true)
             {
-
-                // string? input;
-                // if (!gameServer.GameStarted()) input = "server startgame"; // quick start game to see map
-                // else input = Console.ReadLine();
-
                 string? input = Console.ReadLine();
 
                 if (input.Trim().ToLowerInvariant() == "exit") return;
@@ -53,12 +51,6 @@ namespace RiskIt.ConsoleGame
                 ICommand? comm = parser.Parse(input);
 
                 if (comm is null) continue;
-
-                if (!comm.GetType().Equals(typeof(ServerCommand)) && !gameServer.GameStarted())
-                {
-                    Console.WriteLine("No game started");
-                    continue;
-                }
 
                 Type commandType = comm.GetType();
 
@@ -86,7 +78,9 @@ namespace RiskIt.ConsoleGame
                                 // or is this fine ?
                                 GameSetupResult gameSetupResult = gameServer.SetupGame(cfg, mapSeeder, mapGenerator);
 
-                                gameClients = players.Select(p => new GameClient(gameServer, p)).ToArray();
+                                gameClients = players
+                                    .Select(p => new GameClient(gameServer, p, PrintGameEnded))
+                                    .ToArray();
                                 activePlayer = gameClients[0];
 
                                 foreach (GameClient gameClient in gameClients)
@@ -121,22 +115,26 @@ namespace RiskIt.ConsoleGame
 
                                 break;
                             case ServerCommandType.ReplayGame:
+
+                                ServerCommand serverCommand = ((ServerCommand)comm);
+
                                 GameConfig replayCfg = new GameConfig();
                                 replayCfg.PlayerCount = PLAYER_COUNT;
                                 replayCfg.MapId = MAP_ID;
 
                                 mapGenerator = GetMapGeneratorById(replayCfg.MapId);
 
+                                string path = REPLAY_PATH
+                                    + serverCommand.ReplayName;
 
-                                string path = AppDomain.CurrentDomain.BaseDirectory
-                                    + "GamesLog\\"
-                                    + "0869d4e2-dec8-4dae-817a-5cc7f1eb7ed6.txt";
                                 GameRecord<string> gameRecord = LoadFromFile(path);
                                 GameAction<string>[] gameActions = gameRecord.Actions
                                     .Select(typeWrapper => typeWrapper.UnwrapAction())
                                     .ToArray<GameAction<string>>();
 
-                                replayClient = new ReplayClient(gameServer, gameActions);
+                                replayClient = new ReplayClient(gameServer,
+                                                                gameActions,
+                                                                PrintGameEnded);
 
                                 gameServer.SetupReplay(replayCfg,
                                                        mapSeeder,
@@ -183,19 +181,40 @@ namespace RiskIt.ConsoleGame
                 }
                 if (commandType.Equals(typeof(ReplayCommand)))
                 {
+                    ReplayCommand replayCommand = ((ReplayCommand)comm);
+
                     // TODO: normal error handling and not crash/unknown command
                     if (replayClient is null)
                         throw new Exception("No replay client");
 
-                    if (!replayClient.NextAction())
-                        Console.WriteLine("Replay has ended");
-                    else
+                    switch (replayCommand.commandType)
                     {
-                        comm = new DisplayCommand()
-                        {
-                            DisplayCommandType = DisplayCommandType.Map,
-                        };
+                        case ReplayCommandType.NextAction:
+                            // yeah... but this bypasses weird reference/who can do what
+                            int c = replayCommand.Step ?? 1;
+
+                            while (c > 0)
+                            {
+                                // TODO: make it actually show the map every time it runs
+                                // this comes when we start queueing commands (if we do that)
+                                if (!replayClient.NextAction())
+                                    Console.WriteLine("Replay has ended");
+                                else
+                                {
+                                    comm = new DisplayCommand()
+                                    {
+                                        DisplayCommandType = DisplayCommandType.Map,
+                                    };
+                                }
+                                c--;
+                            }
+
+                            break;
+                        default:
+                            comm = DisplayCommand.CreateUnknownCommand();
+                            break;
                     }
+
                 }
 
                 if (commandType.Equals(typeof(GameCommand)))
@@ -220,6 +239,9 @@ namespace RiskIt.ConsoleGame
                                     MapVisualizer.PrintMap(gameServer.GetGameMap(),
                                         CreateMapId1(MAP_VISUALIZE_DIM)));
                             break;
+                        case DisplayCommandType.Replays:
+                            PrintReplayFiles(REPLAY_PATH);
+                            break;
                         default:
                             Console.WriteLine(dispComm.Text);
                             break;
@@ -230,17 +252,30 @@ namespace RiskIt.ConsoleGame
             }
         }
 
+        private static void PrintGameEnded(int wonPlayerId)
+        {
+            Console.WriteLine($"Game has ended. Player with id {wonPlayerId} has won!");
+        }
+
+        private static void PrintReplayFiles(string replayPath)
+        {
+            DirectoryInfo di = new DirectoryInfo(replayPath);
+            FileInfo[] files = di.GetFiles();
+
+            foreach (var file in files)
+            {
+                Console.WriteLine(file.Name);
+            }
+        }
 
         private static void SaveGameToFile(GameRecord<string> gameResult)
         {
-            string path = AppDomain.CurrentDomain.BaseDirectory + "GamesLog\\";
-
-            string fileName = gameResult.GameId + ".txt";
+            string fileName = gameResult.GameId + ".json";
 
 
-            Directory.CreateDirectory(path);
+            Directory.CreateDirectory(REPLAY_PATH);
 
-            string fullFileName = path + fileName;
+            string fullFileName = REPLAY_PATH + fileName;
 
             FileHandler.WriteToFile(path: fullFileName,
                                     content: JsonConvert.SerializeObject(gameResult));
@@ -261,7 +296,10 @@ namespace RiskIt.ConsoleGame
         private static string GetStateAsString(GameClient gameClient)
         {
             var playerTurn = gameClient.PlayerTurn;
-
+            return GetStateAsString(playerTurn);
+        }
+        private static string GetStateAsString(PlayerTurn playerTurn)
+        {
             return $"Active player: {playerTurn.Player.ToString()} | Phase: {playerTurn.Turn.Phase}";
         }
 

@@ -4,7 +4,9 @@ namespace RiskIt.ConsoleGame.Commands
 {
     public class ServerCommand : ICommand
     {
-        public GameConfig GameConfig { get; set; }
+        public GameConfig? GameConfig { get; set; }
+
+        public string? ReplayName { get; set; }
 
         public ServerCommandType CommandType { get; private set; }
 
@@ -23,6 +25,7 @@ namespace RiskIt.ConsoleGame.Commands
                     return;
                 case "startreplay":
                     CommandType = ServerCommandType.ReplayGame;
+                    ReplayName = args[1];
                     return;
                 case "endgame":
                     CommandType = ServerCommandType.EndGame;

@@ -11,12 +11,17 @@ namespace RiskIt.ConsoleGame
         private GameAction<string>[] gameActions;
         private int index;
 
+        private Action<int> _gameEnded;
 
-        public ReplayClient(GameServer<string> gameServer, GameAction<string>[] gameActions)
+        public ReplayClient(GameServer<string> gameServer,
+                            GameAction<string>[] gameActions,
+                            Action<int> gameEnded)
         {
             this.gameServer = gameServer;
             this.gameActions = gameActions;
             index = 0;
+
+            _gameEnded = gameEnded;
         }
 
         public bool NextAction()
@@ -40,6 +45,14 @@ namespace RiskIt.ConsoleGame
         // empty as we don't care about events when playing back
         public void HandleEvent(GameEvent gameEvent)
         {
+            switch (gameEvent.GetType())
+            {
+                case var type when type == typeof(GameEndedEvent):
+                    GameEndedEvent gameEndedEvent = (GameEndedEvent)gameEvent;
+                    _gameEnded(gameEndedEvent.WonPlayerId);
+                    break;
+            }
+
         }
 
     }

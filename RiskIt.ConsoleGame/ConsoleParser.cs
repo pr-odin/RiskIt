@@ -29,10 +29,15 @@ namespace RiskIt.ConsoleGame
                 command = new ServerCommand();
                 command.Parse(items[1..^0]);
             }
-            else if (items[0] == "next")
+            else if (items[0] == "next" || items[0] == "n")
             {
                 command = new ReplayCommand();
                 command.Parse(items);
+            }
+            else if (items[0] == "replay" || items[0] == "r")
+            {
+                command = new ReplayCommand();
+                command.Parse(items[1..^0]);
             }
             else
             {

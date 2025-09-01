@@ -38,7 +38,6 @@ namespace RiskIt.Main
         {
             if (!GameStarted())
                 throw new Exception("No active game found");
-
         }
 
         public List<Area<T>> GetGameMap()
