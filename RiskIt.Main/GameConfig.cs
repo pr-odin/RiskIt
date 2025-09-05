@@ -2,8 +2,11 @@
 {
     public class GameConfig
     {
-        public int MapId { get; set; }
-        public int PlayerCount { get; set; }
+        public int? MapId { get; set; }
+        public int? PlayerCount { get; set; }
+        public int? StartingTroops { get; set; }
+        public string? AreaDistributionType { get; set; }
+        public string? AttackHandlerType { get; set; }
 
         public void Parse(string[] additionalArgs)
         {

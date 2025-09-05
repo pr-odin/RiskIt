@@ -4,13 +4,23 @@
     {
         public Guid GameId { get; }
         public int DiceSeed { get; }
+        public int PlayerCount { get; }
+
+        public GameConfig GameConfig { get; }
+
         public IEnumerable<TypeWrapper<T>> Actions { get; }
 
-        public GameRecord(Guid gameId, int diceSeed, IEnumerable<TypeWrapper<T>> actions)
+        public GameRecord(Guid gameId,
+                          int diceSeed,
+                          GameConfig gameConfig,
+                          IEnumerable<TypeWrapper<T>> actions,
+                          int playerCount)
         {
             GameId = gameId;
             DiceSeed = diceSeed;
+            GameConfig = gameConfig;
             Actions = actions;
+            PlayerCount = playerCount;
         }
 
         public override bool Equals(object? obj)

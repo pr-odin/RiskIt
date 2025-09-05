@@ -11,27 +11,27 @@ namespace RiskIt.ConsoleGame
         private GameAction<string>[] gameActions;
         private int index;
 
+        public Guid ClientId { get; }
+
         private Action<int> _gameEnded;
 
         public ReplayClient(GameServer<string> gameServer,
                             GameAction<string>[] gameActions,
-                            Action<int> gameEnded)
+                            Action<int> gameEnded,
+                            Guid clientId)
         {
             this.gameServer = gameServer;
             this.gameActions = gameActions;
             index = 0;
+
+            ClientId = clientId;
 
             _gameEnded = gameEnded;
         }
 
         public bool NextAction()
         {
-            if (gameActions.Length <= index)
-                return false;
-
-            GameAction<string> nextAction = gameActions[index++];
-            GameplayValidationType validation = gameServer.ProcessGameAction(nextAction);
-
+            GameplayValidationType validation = gameServer.ReplayNext(ClientId);
 
             // TODO: When we have only valid events, this should probably do something
             if (validation != GameplayValidationType.Success)
@@ -39,7 +39,7 @@ namespace RiskIt.ConsoleGame
                 Console.WriteLine(validation);
             }
 
-            return true;
+            return validation != GameplayValidationType.GameEnded;
         }
 
         // empty as we don't care about events when playing back

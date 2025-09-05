@@ -9,6 +9,9 @@ namespace RiskIt.ConsoleGame
 {
     public class GameClient
     {
+        public readonly Guid ClientId;
+        public Guid? GameId;
+
         public Player Player { get; private set; }
         public PlayerTurn PlayerTurn { get; set; } // need to make sure this is set
 
@@ -17,7 +20,9 @@ namespace RiskIt.ConsoleGame
         private Action<int> _gameEnded;
 
 
-        public GameClient(GameServer<string> gameServer, Player player, Action<int> gameEnded)
+        public GameClient(GameServer<string> gameServer,
+                          Player player,
+                          Action<int> gameEnded)
         {
             _gameServer = gameServer;
             _gameEnded = gameEnded;
@@ -26,6 +31,42 @@ namespace RiskIt.ConsoleGame
             PlayerTurn = new PlayerTurn();
             PlayerTurn.Player = player;
             PlayerTurn.Turn = new Turn();
+
+            ClientId = Guid.NewGuid();
+        }
+
+
+        public Guid CreateGame()
+        {
+            GameId = _gameServer.CreateGame(ClientId);
+
+            if (GameId is null) throw new Exception("No game id was returned");
+
+            if (!_gameServer.RegisterGameClient(ClientId,
+                                           GameId ?? Guid.Empty,
+                                           HandleEvent))
+                throw new Exception("Could not register to the given game on the server");
+
+            return GameId ?? throw new Exception("We already checked for this dotnet..");
+        }
+
+        public void ConnectToGame(Guid gameId)
+        {
+            if (GameId != null)
+                throw new Exception("A game has already been started");
+
+            if (!_gameServer.RegisterGameClient(ClientId,
+                                           gameId,
+                                           HandleEvent))
+                throw new Exception("Could not register to the given game on the server");
+        }
+
+
+        public void StartGame()
+        {
+            if (GameId is null) throw new Exception("No game has been started yet");
+
+            _gameServer.StartGame(ClientId);
         }
 
         public DisplayCommand? HandleGameCommand(GameCommand gameCommand)
@@ -36,7 +77,7 @@ namespace RiskIt.ConsoleGame
             {
                 action = gameCommand.ToAction();
 
-                GameplayValidationType validation = _gameServer.ProcessGameAction(action);
+                GameplayValidationType validation = _gameServer.ProcessGameAction(ClientId, action);
 
                 if (validation != GameplayValidationType.Success)
                 {

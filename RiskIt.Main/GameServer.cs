@@ -1,5 +1,4 @@
-﻿using RiskIt.Main.Actions;
-using RiskIt.Main.AttackHandlers;
+using RiskIt.Main.Actions;
 using RiskIt.Main.Events;
 using RiskIt.Main.MapGeneration;
 using RiskIt.Main.Models;
@@ -10,185 +9,219 @@ namespace RiskIt.Main
 {
     public class GameServer<T> where T : IComparable<T>
     {
-        private Game<T>? _game;
-        private int _diceSeed;
+        public static readonly int MAP_ID = 1;
+        private readonly MapGenerator<T> _mapGenerator;
 
-        // the log of all actions done to the game
-        private List<GameAction<T>> _gameActions;
+        private Dictionary<Guid, GameInstance<T>> _games;
+        private Dictionary<Guid, ConnectedClient> _gameClients;
+        private Dictionary<Guid, List<Guid>> _gameToGameClients;
 
-        // probably not actually needed
-        // a log of all events sent from the game to clients
-        // TODO: make this into a static array upon ready
-        // to start game to not be a memory pig
-        private List<Action<GameEvent>> _gameEventHandlers;
+        private Dictionary<Guid, ReplayInstance<T>> _replays;
+        private ReplayLibrary<T> _replayLibrary;
 
-        // probably only for debug and not actually useful
-        // keeping while refactoring (hi me from 1 year later)
-        private List<GameEvent> _gameEvents;
+        public Action<GameRecord<T>>? WriteRecordToFile;
 
-        private Action<GameAction<T>[]>? saveGameEvents = null;
-
-        public bool GameStarted() => _gameStarted;
-        // this used to be _game == null, but this way its a single bit
-        // not sure if this actually matters but in my brain it make more
-        // sense
-        private bool _gameStarted;
-
-        private void ValidateGame()
+        public GameServer(MapGenerator<T> mapGenerator,
+                          ReplayLibrary<T> replayLibrary)
         {
-            if (!GameStarted())
-                throw new Exception("No active game found");
+            _games = new Dictionary<Guid, GameInstance<T>>();
+            _gameClients = new Dictionary<Guid, ConnectedClient>();
+            _gameToGameClients = new Dictionary<Guid, List<Guid>>();
+            _mapGenerator = mapGenerator;
+
+            _replays = new Dictionary<Guid, ReplayInstance<T>>();
+            _replayLibrary = replayLibrary;
         }
 
-        public List<Area<T>> GetGameMap()
+        public void RegisterWriteRecordToFile(Action<GameRecord<T>> writeRecordToFile)
         {
-            ValidateGame();
-
-            return _game.GetMapAreas();
+            WriteRecordToFile = writeRecordToFile;
         }
 
-        public GameRecord<T> GetGameRecord()
-        {
-            ValidateGame();
+        #region Game
 
-            return new GameRecord<T>(
-                   _game.Id,
-                   _diceSeed,
-                   _gameActions.Select(action => TypeWrapper<T>.WrapAction(action))
-           );
-        }
-
-
-
-        public GameServer()
-        {
-            _gameActions = new List<GameAction<T>>();
-            _gameEvents = new List<GameEvent>();
-            _gameEventHandlers = new List<Action<GameEvent>>();
-            _gameStarted = false;
-        }
-
-
-
-
-
-        public GameplayValidationType ProcessGameAction(GameAction<T> gameAction)
-        {
-            ValidateGame();
-
-            // TODO: Only write the actions that succeeded to the log
-            _gameActions.Add(gameAction);
-
-            GameplayValidationType validation = _game.HandleAction(gameAction);
-
-            if (validation == GameplayValidationType.GameEnded)
-            {
-                // TODO: extract to method to later be
-                // able to get call who won the game etc
-                _game = null;
-                _gameStarted = false;
-
-                if (saveGameEvents != null)
-                    saveGameEvents(_gameActions.ToArray());
-            }
-
-            return validation;
-
-        }
-
+        // NOTE: this is handled in the specific game instance
+        // not sure if this will be a regret later
         private void HandleGameEvent(GameEvent gameEvent)
         {
-            _gameEvents.Add(gameEvent);
-            foreach (var func in _gameEventHandlers)
+            throw new NotImplementedException();
+        }
+
+        public GameplayValidationType ProcessGameAction(Guid clientId, GameAction<T> gameAction)
+        {
+            GameInstance<T> gameServer = GetGameInstance(clientId);
+
+            return gameServer.ProcessGameAction(gameAction);
+        }
+
+        public List<Area<T>> GetGameMap(Guid clientId)
+        {
+            GameInstance<T>? gameServer = GetGameInstance(clientId);
+            if (gameServer != null)
+                return gameServer.GetGameMap();
+
+            ReplayInstance<T> replayInstance = GetReplayInstance(clientId);
+
+            return replayInstance.GetGameMap();
+        }
+
+        // TODO: Add custom config passing - keep default for now
+        public Guid CreateGame(Guid clientId)
+        {
+
+            Guid gameId = Guid.NewGuid();
+
+            void EndOfGameAction(GameAction<T>[] gameActions)
             {
-                func(gameEvent);
-            }
-        }
-
-        #region SETUP
-
-        public void RegisterGameClient(Action<GameEvent> gameEventHandler)
-        {
-            _gameEventHandlers.Add(gameEventHandler);
-        }
-
-        public void RegisterSaveGameActions(Action<GameAction<T>[]> saveGameEvents)
-        {
-            this.saveGameEvents = saveGameEvents;
-        }
-
-        // TODO: fix the signature to not include everyone and their friends
-        public GameSetupResult SetupReplay(GameConfig cfg,
-                                           MapSeeder<T> mapSeeder,
-                                           MapGenerator<T> mapGenerator,
-                                           int diceSeed)
-        {
-            if (GameStarted()) throw new Exception("Smth like 'An active game is already ongoing!!', I think");
-
-            Player[] players = CreatePlayers(cfg.PlayerCount);
-
-            _diceSeed = diceSeed;
-
-            GameBuilder<T> builder = new GameBuilder<T>();
-            builder.Players = players;
-            builder.MapGenerator = mapGenerator;
-            builder.MapSeeder = mapSeeder;
-            builder.PlayerStartingTroops = 20;
-            builder.AreaDistributionType = AreaDistributionType.Simple;
-            builder.AttackHandlerType = AttackHandlerType.Normal;
-            builder.Dice = new RandomDice(_diceSeed);
-            builder.OnEventCallBack = HandleGameEvent;
-
-            _game = builder.Build();
-            _gameStarted = true;
-
-            return new GameSetupResult { GameId = _game.Id, DiceSeed = _diceSeed };
-        }
-        public GameSetupResult SetupGame(GameConfig cfg, MapSeeder<T> mapSeeder, MapGenerator<T> mapGenerator)
-        {
-            if (GameStarted()) throw new Exception("Smth like 'An active game is already ongoing!!', I think");
-
-            Player[] players = CreatePlayers(cfg.PlayerCount);
-
-            Random rand = new Random();
-            _diceSeed = rand.Next();
-
-            GameBuilder<T> builder = new GameBuilder<T>();
-            builder.Players = players;
-            builder.MapGenerator = mapGenerator;
-            builder.MapSeeder = mapSeeder;
-            builder.PlayerStartingTroops = 20;
-            builder.AreaDistributionType = AreaDistributionType.Simple;
-            builder.AttackHandlerType = AttackHandlerType.Normal;
-            builder.Dice = new RandomDice(_diceSeed);
-            builder.OnEventCallBack = HandleGameEvent;
-
-            _game = builder.Build();
-            _gameStarted = true;
-
-            return new GameSetupResult { GameId = _game.Id, DiceSeed = _diceSeed };
-        }
-
-        // TODO: Make this... otherwise :D
-        // No but srsly, make it based on clients connected
-        private static Player[] CreatePlayers(int playerCount)
-        {
-            var res = new Player[playerCount];
-
-            for (int i = 0; i < playerCount; i++)
-            {
-                res[i] = new Player { Id = i };
+                GameInstance<T> endedGameInstance = GetGameInstanceByGameId(gameId);
+                WriteRecordToFile(endedGameInstance.GetGameRecord());
+                CleanAllGameReferences(gameId);
             }
 
-            return res;
+            GameInstance<T> gameServer = new GameInstance<T>(gameId,
+                                                             EndOfGameAction,
+                                                             _mapGenerator);
+
+            _games.Add(gameServer.GameId, gameServer);
+
+            List<Guid> gameClientIds = new List<Guid>();
+            _gameToGameClients.Add(gameId, gameClientIds);
+
+            return gameServer.GameId;
+        }
+
+        private void CleanAllGameReferences(Guid gameId)
+        {
+            GameInstance<T> gameInstance = GetGameInstance(gameId);
+
+            _gameToGameClients.Remove(gameId);
+            // TODO: this will be on the todo list, maybe we want to keep the clients ?
+            // _gameClients.Remove();
+            _games.Remove(gameId);
+        }
+
+        public bool RegisterGameClient(Guid clientId, Guid gameId, Action<GameEvent> gameEventHandler)
+        {
+            ConnectedClient client = new ConnectedClient
+            {
+                GameId = gameId,
+                GameEventHandler = gameEventHandler,
+            };
+
+            GameInstance<T> gameServer = GetGameInstanceByGameId(client.GameId);
+            client.PlayerId = gameServer.RegisterGameClient(gameEventHandler);
+
+            _gameClients.Add(clientId, client);
+
+            List<Guid> gameClients;
+            if (_gameToGameClients.TryGetValue(gameId, out gameClients))
+            {
+                gameClients.Add(clientId);
+            }
+
+            // TODO: Add more validation
+            return true;
+        }
+
+        public bool StartGame(Guid clientId)
+        {
+            GameInstance<T> gameInstance = GetGameInstance(clientId);
+
+            GameConfig cfg = new GameConfig();
+            cfg.MapId = MAP_ID;
+            cfg.AreaDistributionType = "Simple";
+            cfg.AttackHandlerType = "Normal";
+            cfg.PlayerCount = gameInstance.PlayerCount;
+            cfg.StartingTroops = 20;
+
+            gameInstance.SetupGame(cfg);
+
+            return true;
         }
 
         #endregion
-    }
 
-    public class GameSetupResult
+        #region Replays
+
+        public Guid StartReplay(Guid gameId, Guid clientId)
+        {
+            // return linkedListActions.First;
+            GameRecord<T> gameRecord = _replayLibrary.GetGameRecord(gameId);
+
+            LinkedList<GameAction<T>> linkedListActions = new LinkedList<GameAction<T>>(
+                    gameRecord
+                        .Actions
+                        .Select(wrapper => wrapper.UnwrapAction())
+                    );
+
+            Guid replayId = Guid.NewGuid();
+            ReplayInstance<T> replayInstance = new ReplayInstance<T>(gameId: gameId,
+                                                                     replayId: replayId,
+                                                                     mapGenerator: _mapGenerator,
+                                                                     firstGameAction: linkedListActions.First);
+
+            replayInstance.SetupReplay(gameRecord.GameConfig,
+                                       gameRecord.DiceSeed,
+                                       gameRecord.PlayerCount);
+
+            _replays.Add(clientId, replayInstance);
+
+
+            return replayId;
+        }
+
+        public GameplayValidationType ReplayNext(Guid clientId)
+        {
+            ReplayInstance<T> replayInstance = GetReplayInstance(clientId);
+
+            return replayInstance.NextAction();
+        }
+
+        private ReplayInstance<T> GetReplayInstance(Guid clientId)
+        {
+            ReplayInstance<T> replayInstance;
+            if (!_replays.TryGetValue(clientId, out replayInstance))
+            {
+                throw new Exception(@"Should do exceptions soon.. This is basically unknown / not connected client");
+            }
+
+
+            return replayInstance;
+        }
+
+        #endregion
+        private GameInstance<T>? GetGameInstance(Guid clientId)
+        {
+            ConnectedClient client;
+            if (!_gameClients.TryGetValue(clientId, out client))
+            {
+                // client not found in active game, try replays
+                return null;
+            }
+
+            GameInstance<T> gameServer = GetGameInstanceByGameId(client.GameId);
+
+            return gameServer;
+        }
+
+        private GameInstance<T> GetGameInstanceByGameId(Guid gameId)
+        {
+            GameInstance<T> gameServer;
+            if (!_games.TryGetValue(gameId, out gameServer))
+            {
+                throw new Exception(@"Should do exceptions soon.. This is basically unknown game");
+            }
+
+            return gameServer;
+        }
+
+    }
+    public class ConnectedClient
     {
-        public Guid GameId { get; set; }
-        public int DiceSeed { get; set; }
+        public Action<GameEvent> GameEventHandler;
+        public Guid GameId;
+        public int? PlayerId;
+
     }
 }
+

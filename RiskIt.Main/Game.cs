@@ -9,7 +9,6 @@ namespace RiskIt.Main
     // TODO: Cards ?
     public class Game<T> where T : IComparable<T>
     {
-        public Guid Id { get; private set; }
         private IDictionary<T, Area<T>> _map { get; set; }
         private List<Player> _players { get; set; }
         public PlayerTurn GameTurn { get; private set; }
@@ -25,7 +24,6 @@ namespace RiskIt.Main
             Action<GameEvent> EventCallBack)
         {
             if (players.Count() < 2) throw new Exception("Smth like too few players");
-            Id = Guid.NewGuid();
             _map = map;
             _players = players.ToList();
 
