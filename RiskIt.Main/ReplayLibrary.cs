@@ -1,4 +1,3 @@
-using RiskIt.Main.Actions;
 using RiskIt.Main.Persist;
 
 namespace RiskIt.Main
@@ -6,6 +5,8 @@ namespace RiskIt.Main
     public class ReplayLibrary<T> where T : IComparable<T>
     {
         private HashSet<Guid> _replays;
+        public Guid[] AvailableReplays() => _replays.ToArray();
+
         private Func<string, GameRecord<T>> fetchGameRecordById;
 
         public ReplayLibrary(string[] gameIds,

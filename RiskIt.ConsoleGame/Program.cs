@@ -89,7 +89,7 @@ namespace RiskIt.ConsoleGame
                                 Console.WriteLine("New game started with id \"{0}\"", gameId);
 
                                 // print state of start game
-                                Console.WriteLine(GetStateAsString(activePlayer));
+                                Console.WriteLine(activePlayer.GetStateAsString());
                                 PrintPaintAreasToConsole(
                                         MapVisualizer.PrintMap(
                                             gameServer.GetGameMap(activePlayer.ClientId),
@@ -114,20 +114,12 @@ namespace RiskIt.ConsoleGame
 
                                 Guid replayClientId = Guid.NewGuid();
 
-                                gameServer.StartReplay(Guid.Parse(serverCommand.ReplayName),
-                                                       replayClientId);
-
                                 replayClient = new ReplayClient(gameServer,
-                                                                null,
                                                                 PrintGameEnded,
                                                                 replayClientId);
 
-                                replayClient.NextAction();
 
-
-                                // // TODO: probably make it a register REPLAY client
-                                // gameServer.RegisterGameClient(replayClient.HandleEvent);
-
+                                replayClient.StartReplay(serverCommand.ReplayName);
 
                                 PrintPaintAreasToConsole(
                                         MapVisualizer.PrintMap(
@@ -136,14 +128,9 @@ namespace RiskIt.ConsoleGame
 
                                 break;
                             case ServerCommandType.EndGame:
-                                throw new NotImplementedException("Removed feature to just end game. Will add back as a leave client side ?");
-
-                                // TODO: Should this end the game or just persist it to file ?
-                                // GameRecord<string> gameResult = gameServer.GetGameRecord();
-                                //
-                                // SaveGameToFile(gameResult);
-                                //
-                                // Console.WriteLine("Game with id \"{0}\" has been saved (maybe terminated)", gameResult.GameId);
+                                throw new NotImplementedException(
+                                        "Removed feature to just end game. Will add back as a leave client side ?"
+                                        );
                                 break;
                             default:
                                 break;
@@ -205,7 +192,7 @@ namespace RiskIt.ConsoleGame
 
                     comm = currClient.HandleGameCommand(gameCommand) ?? comm;
 
-                    Console.WriteLine(GetStateAsString(activePlayer));
+                    Console.WriteLine(activePlayer.GetStateAsString());
                 }
 
                 if (comm.GetType().Equals(typeof(DisplayCommand)))
@@ -225,7 +212,10 @@ namespace RiskIt.ConsoleGame
                                                            CreateMapId1(MAP_VISUALIZE_DIM)));
                             break;
                         case DisplayCommandType.Replays:
-                            PrintReplayFiles(REPLAY_PATH);
+                            PrintReplayFiles(gameServer
+                                    .GetAvailableReplays()
+                                    .Select(e => e.ToString())
+                                    );
                             break;
                         default:
                             Console.WriteLine(dispComm.Text);
@@ -242,14 +232,11 @@ namespace RiskIt.ConsoleGame
             Console.WriteLine($"Game has ended. Player with id {wonPlayerId} has won!");
         }
 
-        private static void PrintReplayFiles(string replayPath)
+        private static void PrintReplayFiles(IEnumerable<string> replayIds)
         {
-            DirectoryInfo di = new DirectoryInfo(replayPath);
-            FileInfo[] files = di.GetFiles();
-
-            foreach (var file in files)
+            foreach (var replayId in replayIds)
             {
-                Console.WriteLine(file.Name);
+                Console.WriteLine(replayId);
             }
         }
         private static string[] GetReplayFiles()
@@ -284,16 +271,6 @@ namespace RiskIt.ConsoleGame
                 throw new Exception("Could not load game record");
 
             return gameRecord;
-        }
-
-        private static string GetStateAsString(GameClient gameClient)
-        {
-            var playerTurn = gameClient.PlayerTurn;
-            return GetStateAsString(playerTurn);
-        }
-        private static string GetStateAsString(PlayerTurn playerTurn)
-        {
-            return $"Active player: {playerTurn.Player.ToString()} | Phase: {playerTurn.Turn.Phase}";
         }
 
         private static GameClient GetCurrentGameClient(GameClient[] gameClients)

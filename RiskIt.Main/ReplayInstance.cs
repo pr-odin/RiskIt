@@ -68,7 +68,10 @@ namespace RiskIt.Main
         // TODO: implement on end ?
         public void HandleGameEvent(GameEvent gameEvent)
         {
+            if (_gameEventHandler is null)
+                return;
 
+            _gameEventHandler(gameEvent);
         }
 
         // TODO: fix the signature to not include everyone and their friends

@@ -12,6 +12,7 @@ namespace RiskIt.ConsoleGame
         public readonly Guid ClientId;
         public Guid? GameId;
 
+        // TODO: Remove player from here, we dont need it to play
         public Player Player { get; private set; }
         public PlayerTurn PlayerTurn { get; set; } // need to make sure this is set
 
@@ -35,6 +36,13 @@ namespace RiskIt.ConsoleGame
             ClientId = Guid.NewGuid();
         }
 
+        public string GetStateAsString()
+        {
+            if (GameId is null)
+                return "No active game";
+
+            return PlayerTurn.ToString();
+        }
 
         public Guid CreateGame()
         {
@@ -89,9 +97,6 @@ namespace RiskIt.ConsoleGame
                         DisplayCommandType = DisplayCommandType.Display,
                     };
                 }
-
-                // TODO: Do we send this from here or put it into a DisplayCommand ?
-                // Console.WriteLine(GetStateAsString(activePlayer));
             }
             catch (Exception e)
             {
@@ -143,6 +148,7 @@ namespace RiskIt.ConsoleGame
 
                 case var type when type == typeof(GameEndedEvent):
                     GameEndedEvent gameEndedEvent = (GameEndedEvent)gameEvent;
+                    GameId = null;
                     _gameEnded(gameEndedEvent.WonPlayerId);
                     break;
 

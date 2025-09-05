@@ -93,6 +93,7 @@ namespace RiskIt.Main
             ValidateGame();
 
             // TODO: Only write the actions that succeeded to the log
+            // Also: dont write the skip turn actions ?
             _gameActions.Add(gameAction);
 
             GameplayValidationType validation = _game.HandleAction(gameAction);

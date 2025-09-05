@@ -78,25 +78,29 @@ namespace RiskIt.Main
                 CleanAllGameReferences(gameId);
             }
 
-            GameInstance<T> gameServer = new GameInstance<T>(gameId,
+            GameInstance<T> gameInstance = new GameInstance<T>(gameId,
                                                              EndOfGameAction,
                                                              _mapGenerator);
 
-            _games.Add(gameServer.GameId, gameServer);
+            _games.Add(gameInstance.GameId, gameInstance);
 
             List<Guid> gameClientIds = new List<Guid>();
             _gameToGameClients.Add(gameId, gameClientIds);
 
-            return gameServer.GameId;
+            return gameInstance.GameId;
         }
 
         private void CleanAllGameReferences(Guid gameId)
         {
             GameInstance<T> gameInstance = GetGameInstance(gameId);
 
-            _gameToGameClients.Remove(gameId);
-            // TODO: this will be on the todo list, maybe we want to keep the clients ?
-            // _gameClients.Remove();
+            List<Guid> gameClients;
+
+            _gameToGameClients.Remove(gameId, out gameClients);
+
+            foreach (Guid clientId in gameClients)
+                _gameClients.Remove(clientId);
+
             _games.Remove(gameId);
         }
 
@@ -143,9 +147,10 @@ namespace RiskIt.Main
 
         #region Replays
 
-        public Guid StartReplay(Guid gameId, Guid clientId)
+        public Guid StartReplay(Guid gameId,
+                                Guid clientId,
+                                Action<GameEvent> handleGameEvent)
         {
-            // return linkedListActions.First;
             GameRecord<T> gameRecord = _replayLibrary.GetGameRecord(gameId);
 
             LinkedList<GameAction<T>> linkedListActions = new LinkedList<GameAction<T>>(
@@ -159,6 +164,7 @@ namespace RiskIt.Main
                                                                      replayId: replayId,
                                                                      mapGenerator: _mapGenerator,
                                                                      firstGameAction: linkedListActions.First);
+            replayInstance.RegisterGameClient(handleGameEvent);
 
             replayInstance.SetupReplay(gameRecord.GameConfig,
                                        gameRecord.DiceSeed,
@@ -187,6 +193,11 @@ namespace RiskIt.Main
 
 
             return replayInstance;
+        }
+
+        public Guid[] GetAvailableReplays()
+        {
+            return _replayLibrary.AvailableReplays();
         }
 
         #endregion

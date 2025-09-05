@@ -49,8 +49,6 @@ namespace RiskIt.Main
 
         public GameplayValidationType HandleAction(GameAction<T> action)
         {
-            // TODO: put this BEFORE sending the final event
-            // so probably where we advance turn
             if (GameHasEnded()) return GameplayValidationType.GameEnded;
 
             GameplayValidationType? retVal = null;
