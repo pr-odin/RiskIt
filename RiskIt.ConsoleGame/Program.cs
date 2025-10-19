@@ -13,7 +13,7 @@ namespace RiskIt.ConsoleGame
         public static readonly int PLAYER_COUNT = 2;
         public static readonly int MAP_ID = 1;
         public static readonly int MAP_VISUALIZE_DIM = 5;
-        public static readonly string REPLAY_PATH = AppDomain.CurrentDomain.BaseDirectory + "GamesLog\\";
+        public static readonly string REPLAY_PATH = Path.Join(AppDomain.CurrentDomain.BaseDirectory, "GamesLog");
 
 
 
@@ -21,7 +21,8 @@ namespace RiskIt.ConsoleGame
         {
             GameRecord<string> GetGameActions(string gameId)
             {
-                GameRecord<string> gameRecord = LoadFromFile(REPLAY_PATH + gameId + ".json");
+                string path = Path.Join(REPLAY_PATH, gameId + ".json");
+                GameRecord<string> gameRecord = LoadFromFile(path);
 
                 return gameRecord;
             }
@@ -50,7 +51,7 @@ namespace RiskIt.ConsoleGame
 
             /*Console.WriteLine(Console.BufferWidth);*/  // 120
             /*Console.WriteLine(Console.BufferHeight);*/ // 9001
-            Console.BufferWidth = 120; // default 120
+            // Console.BufferWidth = 120; // default 120
             /*Console.BufferHeight = 900;*/
             Console.SetWindowSize(Console.BufferWidth, 40);
 
@@ -103,14 +104,6 @@ namespace RiskIt.ConsoleGame
                                 GameConfig replayCfg = new GameConfig();
                                 replayCfg.PlayerCount = PLAYER_COUNT;
                                 replayCfg.MapId = MAP_ID;
-
-                                string path = REPLAY_PATH
-                                    + serverCommand.ReplayName;
-
-                                // GameRecord<string> gameRecord = LoadFromFile(path);
-                                // GameAction<string>[] gameActions = gameRecord.Actions
-                                //     .Select(typeWrapper => typeWrapper.UnwrapAction())
-                                //     .ToArray<GameAction<string>>();
 
                                 Guid replayClientId = Guid.NewGuid();
 
@@ -255,7 +248,7 @@ namespace RiskIt.ConsoleGame
 
             Directory.CreateDirectory(REPLAY_PATH);
 
-            string fullFileName = REPLAY_PATH + fileName;
+            string fullFileName = Path.Join(REPLAY_PATH, fileName);
 
             FileHandler.WriteToFile(path: fullFileName,
                                     content: JsonConvert.SerializeObject(gameResult));
